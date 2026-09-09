@@ -723,14 +723,13 @@
             de cada pessoa</b> diz como ela foi: quem entra 06:20 numa escala de 07:30 registra
             Entrada 1 com <b>1h10 de hora extra</b>; quem sai 18:00 numa escala de 18:30 registra
             Saída 2 com <b>30 min de saída antecipada</b>; depois das 18:30, hora extra de novo.
-            A tolerância abaixo evita virar ocorrência por causa de dois minutos.
+            A tolerância evita virar ocorrência por causa de dois minutos.
           </p>
-          <div style="max-width:240px;margin-bottom:16px;">
-            <label class="campo" for="cfgTolerancia">Tolerância (minutos)</label>
-            <input type="number" id="cfgTolerancia" min="0" max="60" step="1">
-          </div>
+          <!-- A tolerancia tem um dono so: a Gestao de RH. Ter dois lugares
+               para editar o mesmo numero e como ter dois relogios na parede. -->
+          <div class="msg info" id="regrasFolha"></div>
 
-          <button class="btn" id="btnSalvarFaixas">Salvar faixas e tolerância</button>
+          <button class="btn" id="btnSalvarFaixas">Salvar faixas</button>
           <div class="msg" id="faixasMsg"></div>
         </div>
 
@@ -763,9 +762,15 @@
         <div class="cartao">
           <h3>Levar as batidas para o cartão ponto</h3>
           <p class="sub">
-            Monta o mês no mesmo formato do arquivo que vinha do relógio, e grava no Controle de
-            Ponto. Depois disso o cálculo de horas, atrasos e extras acontece lá, como sempre.
-            Pode rodar quantas vezes quiser — ele sempre refaz o mês inteiro a partir das batidas.
+            <b>Isto já acontece sozinho.</b> Cada batida registrada, corrigida ou anulada refaz
+            o mês inteiro no Controle de Ponto na mesma hora — o mês corrente está sempre em dia
+            na Gestão de RH, sem ninguém apertar nada.
+          </p>
+          <p class="sub">
+            Este botão serve para os casos em que o automático não age: um mês que <b>já foi
+            importado de planilha</b> (o automático nunca sobrescreve o arquivo do contador), ou
+            quando você quer forçar a reconstrução de um mês antigo. Pode rodar quantas vezes
+            quiser — ele sempre refaz o mês inteiro a partir das batidas.
           </p>
           <div class="linhaCampos" style="margin-bottom:16px;">
             <div style="flex:0 0 190px;">
@@ -1618,13 +1623,18 @@ function pintaPortal(d){
       cartaoPortal('Saldo' + (ate || ' do mês'),
         (saldo > 0 ? '+' : saldo < 0 ? '−' : '') + hhmm(Math.abs(saldo)),
         saldo > 0 ? 'pos' : saldo < 0 ? 'neg' : 'zero') +
-      cartaoPortal('Hora extra', hhmm(t.extraMin || 0),
+      cartaoPortal('Hora extra na folha', hhmm(t.extraMin || 0),
         (t.extraMin || 0) > 0 ? 'pos' : 'zero') +
-      cartaoPortal('Atrasos', hhmm(t.atrasoMin || 0),
+      cartaoPortal('Atrasos na folha', hhmm(t.atrasoMin || 0),
         (t.atrasoMin || 0) > 0 ? 'neg' : 'zero') +
       cartaoPortal('Saídas antecipadas', hhmm(t.antecipadaMin || 0),
         (t.antecipadaMin || 0) > 0 ? 'neg' : 'zero') +
-    '</div>';
+    '</div>' +
+    '<p style="font-size:12.5px;color:var(--ink-soft);margin:-6px 0 16px;">' +
+      'Hora extra e atrasos são exatamente os números que entram no seu ' +
+      'fechamento do mês, já com a tolerância de ' +
+      escapaHtml(String((d.regras && d.regras.tolAtraso) != null ? d.regras.tolAtraso : 5)) +
+      ' minutos aplicada.</p>';
 
   // Dias anteriores ao primeiro uso nao entram na conta nem na lista: nao
   // foram falta de ninguem, o sistema e que ainda nao estava de pe.
@@ -2053,9 +2063,23 @@ function preencheFaixas(){
   el('cfgSai1').value = hhmm(f.sai1);
   el('cfgEnt2').value = hhmm(f.ent2);
   el('cfgSai2').value = hhmm(f.sai2);
-  el('cfgTolerancia').value = cfgAtual.toleranciaMin != null ? cfgAtual.toleranciaMin : 5;
   pintaResumoFaixas(f);
+  pintaRegrasFolha();
 }
+/* A tolerancia mora na Gestao de RH (pontoConfig) e e de la que as duas
+   pontas leem. Aqui ela so aparece, para o RH saber com que numero o ponto
+   esta contando sem precisar abrir o outro sistema. */
+function pintaRegrasFolha(){
+  supa.rpc('ponto_regras').then(function(res){
+    var g = res.data || {};
+    el('regrasFolha').className = 'msg info';
+    el('regrasFolha').textContent =
+      'Tolerância em uso: ' + (g.tolAtraso != null ? g.tolAtraso : 5) + ' min na entrada e ' +
+      (g.tolSaida != null ? g.tolSaida : 5) + ' min na saída. ' +
+      'Esses números são os da Gestão de RH — mude lá, e o ponto acompanha na hora.';
+  });
+}
+
 function pintaResumoFaixas(f){
   el('faixasResumo').textContent =
     'Entrada 1: até ' + hhmm(f.sai1 - 1) + '   ·   ' +
@@ -2090,19 +2114,13 @@ el('btnSalvarFaixas').addEventListener('click', function(){
       'Saída 1, depois Entrada 2, depois Saída 2.', 'erro');
     return;
   }
-  var tol = parseInt(el('cfgTolerancia').value, 10);
-  if(isNaN(tol) || tol < 0 || tol > 60){
-    mostraMsg('faixasMsg', 'A tolerância precisa ser um número de 0 a 60 minutos.', 'erro');
-    return;
-  }
-  supa.rpc('ponto_admin_cfg_salvar', { p: { faixas: f, toleranciaMin: tol } }).then(function(res){
+  supa.rpc('ponto_admin_cfg_salvar', { p: { faixas: f } }).then(function(res){
     if(res.error){ mostraMsg('faixasMsg', res.error.message, 'erro'); return; }
     cfgAtual = res.data || {};
     preencheCfg();
-    // A faixa decide o slot na hora da batida e fica gravada; a tolerancia
-    // e a comparacao com a escala sao recalculadas toda vez que a tela abre.
-    mostraMsg('faixasMsg', 'Salvo. A tolerância vale também para os dias já registrados; ' +
-      'as faixas valem para as próximas batidas.', 'ok');
+    // A faixa decide o slot na hora da batida e fica gravada junto com ela.
+    mostraMsg('faixasMsg', 'Faixas salvas. Valem para as próximas batidas — ' +
+      'as que já estão gravadas mantêm o tipo que receberam.', 'ok');
   });
 });
 
