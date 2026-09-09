@@ -99,7 +99,18 @@
   .nome .txt{min-width:0; display:block;}
   .nome .n{display:block; font-weight:700; font-size:15.5px; line-height:1.25;}
   .nome .f{display:block; font-size:12.5px; color:var(--ink-soft);}
+  .nome .f.novo{color:var(--brand); font-weight:700;}
   .nome .seta{margin-left:auto; color:var(--border); font-size:22px;}
+
+  /* ---- Primeiro acesso: a pessoa cria o proprio PIN ---- */
+  #passoNovo .campoNovo{margin-bottom:14px;}
+  #passoNovo input{
+    width:100%; min-height:var(--tap); padding:0 14px; font-size:17px;
+    border:1px solid var(--border); border-radius:12px; background:var(--panel);
+    color:var(--ink); font-family:inherit; font-variant-numeric:tabular-nums;
+    letter-spacing:.04em;
+  }
+  #passoNovo input:focus{outline:2px solid var(--brand); outline-offset:1px;}
 
   /* ---- Teclado de PIN ---- */
   .pinTopo{display:flex; align-items:center; gap:12px; margin-bottom:10px;}
@@ -192,11 +203,25 @@
   .contador{font-size:12.5px; color:var(--ink-soft); margin-top:14px;}
   .rodape{text-align:center; padding:26px 16px 32px; display:flex; gap:22px;
           justify-content:center; align-items:center; flex-wrap:wrap;}
-  .rodape a{color:var(--ink-soft); font-size:12px; text-decoration:none; opacity:.55; cursor:pointer;}
+  /* A porta do RH fica discreta de proposito: o colaborador nao deve nem
+     cogitar que ela e para ele. */
+  .rodape a{color:var(--ink-soft); font-size:11px; text-decoration:none; opacity:.38; cursor:pointer;}
   /* A porta do colaborador precisa ser achada; a do RH, nao. */
   .rodape a.destaque{
     font-size:14px; opacity:1; color:var(--brand-dark); font-weight:700;
     text-decoration:underline; text-underline-offset:3px;
+  }
+
+  /* ---- Camera para ler o QR ---- */
+  .camCaixa{
+    position:relative; width:100%; aspect-ratio:1/1; max-height:70vh;
+    background:#000; border-radius:16px; overflow:hidden; box-shadow:var(--shadow);
+  }
+  .camCaixa video{width:100%; height:100%; object-fit:cover; display:block;}
+  .camMira{
+    position:absolute; inset:14%; border-radius:14px; pointer-events:none;
+    box-shadow:0 0 0 100vmax rgba(0,0,0,.35);
+    border:3px solid rgba(255,255,255,.9);
   }
 
   /* ======================= PORTAL DO COLABORADOR ======================= */
@@ -403,6 +428,54 @@
       </div>
     </section>
 
+    <!-- primeiro acesso: confirma quem e e escolhe o proprio PIN -->
+    <section id="passoNovo" hidden>
+      <div class="pinTopo">
+        <div class="ini" id="novoIni"></div>
+        <div>
+          <div class="n" id="novoNome"></div>
+          <div class="f" id="novoFuncao"></div>
+        </div>
+      </div>
+      <h2 class="titulo">Primeiro acesso</h2>
+      <p class="dica">
+        Você ainda não tem PIN. Confirme que é você pelo CPF e escolha um PIN de
+        4 números — <b>só você vai saber</b>, nem o RH consegue ver depois.
+      </p>
+      <div class="campoNovo">
+        <label class="campo" for="novoCpf">Seu CPF</label>
+        <input type="text" id="novoCpf" inputmode="numeric" autocomplete="off"
+               placeholder="000.000.000-00" maxlength="14">
+      </div>
+      <div class="campoNovo">
+        <label class="campo" for="novoPin">PIN de 4 números</label>
+        <input type="password" id="novoPin" inputmode="numeric" autocomplete="new-password"
+               placeholder="••••" maxlength="4">
+      </div>
+      <div class="campoNovo">
+        <label class="campo" for="novoPin2">Repita o PIN</label>
+        <input type="password" id="novoPin2" inputmode="numeric" autocomplete="new-password"
+               placeholder="••••" maxlength="4">
+      </div>
+      <div class="msg" id="novoMsg"></div>
+      <button class="btn bloco" id="btnCriarPin">Criar meu PIN</button>
+      <div style="margin-top:14px; text-align:center;">
+        <button class="btn fantasma pequeno" id="btnVoltarNovo">Não sou eu, voltar</button>
+      </div>
+    </section>
+
+    <!-- leitura do QR pela camera do proprio aparelho -->
+    <section id="passoCamera" hidden>
+      <h2 class="titulo">Aponte para o QR Code</h2>
+      <p class="dica">Encaixe o código do cartaz dentro da moldura.</p>
+      <div class="camCaixa">
+        <video id="camVideo" playsinline muted></video>
+        <div class="camMira"></div>
+      </div>
+      <div class="msg" id="camErro"></div>
+      <button class="btn fantasma bloco" id="btnFecharCamera" style="margin-top:14px;">Cancelar</button>
+    </section>
+
     <!-- passo 3: resultado -->
     <section id="passoOk" hidden>
       <div class="resultado" id="areaResultado"></div>
@@ -571,16 +644,12 @@
         <div class="cartao">
           <h3>Quem pode bater o ponto</h3>
           <p class="sub">
-            Só quem está <b>liberado</b> e tem <b>PIN</b> aparece na tela do QR. O PIN tem 4 números
-            e é pessoal — depois de salvo ele não pode mais ser lido, apenas trocado.
+            Quem está <b>liberado</b> aparece na tela do QR. Quem ainda não tem PIN cria o
+            próprio no primeiro acesso, confirmando o CPF — <b>você não precisa distribuir
+            PIN nenhum</b>, e não tem como ver o PIN de ninguém. Se alguém esquecer o dele,
+            use <b>Liberar 1º acesso</b> e a pessoa escolhe outro.
           </p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
-            <button class="btn" id="btnGerarPins">Sortear os PINs que faltam</button>
-          </div>
           <div class="msg" id="equipeMsg"></div>
-          <!-- A lista sai uma vez so, na tela, para o RH imprimir e entregar.
-               Depois disso o PIN vira hash e nao ha como ler de novo. -->
-          <div id="listaPins"></div>
           <div class="rolagem"><table class="tab" id="tabEquipe"></table></div>
         </div>
       </div>
@@ -842,23 +911,175 @@ function leToken(){
 }
 
 function passo(qual){
-  el('passoNome').hidden = qual !== 'nome';
-  el('passoPin').hidden  = qual !== 'pin';
-  el('passoOk').hidden   = qual !== 'ok';
+  el('passoNome').hidden   = qual !== 'nome';
+  el('passoPin').hidden    = qual !== 'pin';
+  el('passoNovo').hidden   = qual !== 'novo';
+  el('passoOk').hidden     = qual !== 'ok';
+  el('passoCamera').hidden = qual !== 'camera';
+  // Camera aberta consome bateria e acende a luz do aparelho: sai da tela,
+  // desliga.
+  if(qual !== 'camera') paraCamera();
   if(timerVolta){ clearInterval(timerVolta); timerVolta = null; }
 }
 
+/* ====================================================================
+   LER O QR PELA CAMERA
+   O caminho normal e a camera do proprio celular abrindo o link. Mas
+   quem digitou o endereco, salvou nos favoritos ou recebeu o link sem o
+   codigo cai numa tela sem lista nenhuma — e ficava sem saida. Aqui a
+   pagina abre a camera e le o cartaz por conta propria.
+   ==================================================================== */
+var camStream = null, camTimer = null;
+
+function paraCamera(){
+  if(camTimer){ cancelAnimationFrame(camTimer); camTimer = null; }
+  if(camStream){
+    camStream.getTracks().forEach(function(t){ t.stop(); });
+    camStream = null;
+  }
+  var v = el('camVideo');
+  if(v) v.srcObject = null;
+}
+
+function avisoCamera(txt){
+  mostraMsg('camMsg', txt, 'erro');
+}
+
+/* O QR do cartaz aponta para .../#t=CODIGO. Qualquer outro QR que passe
+   na frente da camera e ignorado de proposito. */
+function tokenDoTexto(txt){
+  var m = /[#&?]t=([^&#\s]+)/.exec(String(txt || '').trim());
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+function carregaJsQR(pronto){
+  if(window.jsQR){ pronto(true); return; }
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js';
+  s.onload  = function(){ pronto(!!window.jsQR); };
+  s.onerror = function(){ pronto(false); };
+  document.head.appendChild(s);
+}
+
+function abreCamera(){
+  avisoCamera('');
+  mostraMsg('camErro', '');
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    avisoCamera('Este navegador não deixa a página usar a câmera. Abra o aplicativo de ' +
+                'câmera do celular, aponte para o cartaz e toque no aviso que aparecer.');
+    return;
+  }
+  passo('camera');
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: 'environment' } }, audio: false
+  }).then(function(st){
+    camStream = st;
+    var v = el('camVideo');
+    v.srcObject = st;
+    return v.play();
+  }).then(function(){
+    iniciaLeitura();
+  })['catch'](function(e){
+    paraCamera();
+    passo('nome');
+    var nome = (e && e.name) || '';
+    avisoCamera(
+      nome === 'NotAllowedError'
+        ? 'A permissão da câmera foi negada. Libere a câmera para este site nas configurações ' +
+          'do navegador, ou use o aplicativo de câmera do celular apontando para o cartaz.'
+      : nome === 'NotFoundError'
+        ? 'Não encontrei uma câmera neste aparelho.'
+      : location.protocol !== 'https:'
+        ? 'A câmera só funciona quando a página é aberta por https://. Fale com o RH.'
+        : 'Não deu para abrir a câmera. Use o aplicativo de câmera do celular ' +
+          'apontando para o cartaz.');
+  });
+}
+
+function iniciaLeitura(){
+  var v   = el('camVideo');
+  var cv  = document.createElement('canvas');
+  var ctx = cv.getContext('2d', { willReadFrequently: true });
+  var det = null;
+  var avisou = false;
+
+  // Chrome no Android le QR nativamente; o resto cai no jsQR.
+  if('BarcodeDetector' in window){
+    try{ det = new window.BarcodeDetector({ formats: ['qr_code'] }); }catch(e){ det = null; }
+  }
+
+  function achou(texto){
+    var t = tokenDoTexto(texto);
+    if(!t){
+      if(!avisou){
+        avisou = true;
+        mostraMsg('camErro', 'Esse não é o código do ponto. Aponte para o QR do cartaz.', 'erro');
+      }
+      return false;
+    }
+    paraCamera();
+    TOKEN = t;
+    // Deixa o codigo no endereco: da proxima vez a pessoa abre direto.
+    try{ location.hash = 't=' + encodeURIComponent(t); }catch(e){}
+    el('buscaNome').style.display = '';
+    el('dicaNome').style.display  = '';
+    el('linkMeus').hidden = false;
+    document.querySelector('#passoNome h2.titulo').textContent = 'Toque no seu nome';
+    el('avisoLista').innerHTML = '';
+    passo('nome');
+    carregaLista();
+    return true;
+  }
+
+  function ciclo(){
+    if(!camStream) return;
+    if(v.readyState >= 2 && v.videoWidth){
+      if(det){
+        det.detect(v).then(function(cods){
+          if(cods && cods.length && achou(cods[0].rawValue)) return;
+          camTimer = requestAnimationFrame(ciclo);
+        })['catch'](function(){
+          det = null;                       // navegador desistiu: tenta o jsQR
+          camTimer = requestAnimationFrame(ciclo);
+        });
+        return;
+      }
+      if(window.jsQR){
+        cv.width = v.videoWidth; cv.height = v.videoHeight;
+        ctx.drawImage(v, 0, 0, cv.width, cv.height);
+        var img = ctx.getImageData(0, 0, cv.width, cv.height);
+        var r = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+        if(r && r.data && achou(r.data)) return;
+      }
+    }
+    camTimer = requestAnimationFrame(ciclo);
+  }
+
+  if(det){ ciclo(); return; }
+  carregaJsQR(function(ok){
+    if(!ok){
+      paraCamera(); passo('nome');
+      avisoCamera('Não consegui carregar o leitor de QR — normalmente é a internet. ' +
+                  'Use o aplicativo de câmera do celular apontando para o cartaz.');
+      return;
+    }
+    ciclo();
+  });
+}
+
+el('btnFecharCamera').addEventListener('click', function(){ passo('nome'); });
+
 function carregaLista(){
   if(!TOKEN){
-    // Sem codigo na URL nao da para saber de qual empresa e a lista. Em vez
-    // de deixar a tela vazia, explicamos e abrimos a porta da administracao,
-    // que e por onde se pega o QR e o link.
+    // Chegou no endereco sem o codigo do cartaz: digitou, salvou nos
+    // favoritos, recebeu o link pelado. Em vez de um beco sem saida, a
+    // propria pagina abre a camera para ler o QR da parede.
     el('listaNomes').innerHTML = '';
     el('buscaNome').style.display = 'none';
     el('dicaNome').style.display = 'none';
     // Sem lista nao ha registro para abrir: a porta do colaborador some.
     el('linkMeus').hidden = true;
-    document.querySelector('#passoNome h2.titulo').textContent = 'Falta o código do QR';
+    document.querySelector('#passoNome h2.titulo').textContent = 'Leia o QR Code do cartaz';
 
     var local = (location.protocol === 'file:')
       ? '<div class="erroCaixa"><b>Esta página está sendo aberta como arquivo do computador.</b><br>' +
@@ -867,16 +1088,12 @@ function carregaLista(){
       : '';
 
     el('avisoLista').innerHTML = local +
-      '<div class="aviso">Esta tela é a que o colaborador vê <b>depois de ler o QR Code</b>. ' +
-      'O QR carrega um código secreto, e é ele que libera a lista de nomes — por isso, aberta ' +
-      'direto pelo endereço, ela não mostra ninguém.<br><br>' +
-      'É a primeira vez? Entre na administração para cadastrar os PINs e imprimir o cartaz.</div>' +
-      '<button class="btn bloco" id="btnIrAdmin" style="margin-top:6px;">Entrar na administração</button>';
+      '<div class="aviso">O cartaz na parede carrega um código secreto, e é ele que ' +
+      'libera a lista de nomes. Toque no botão e aponte a câmera para o código.</div>' +
+      '<button class="btn bloco" id="btnAbrirCamera" style="margin-top:6px;">Ler o QR Code</button>' +
+      '<div class="msg" id="camMsg"></div>';
 
-    el('btnIrAdmin').addEventListener('click', function(){
-      mostraAdmin(true);
-      supa.auth.getSession().then(function(r){ entrou(r.data ? r.data.session : null); });
-    });
+    el('btnAbrirCamera').addEventListener('click', abreCamera);
     return;
   }
   supa.rpc('ponto_qr_lista', { p_token: TOKEN }).then(function(res){
@@ -911,10 +1128,10 @@ function carregaLista(){
 
 function pintaNomes(){
   if(!listaColabs.length){
-    // Lista vazia nao e busca sem resultado: e ninguem cadastrado ainda.
+    // Lista vazia nao e busca sem resultado: e ninguem liberado ainda.
     el('listaNomes').innerHTML =
-      '<div class="aviso">Ainda não há ninguém com PIN cadastrado. ' +
-      'Procure o RH para receber o seu.</div>';
+      '<div class="aviso">Ainda não há ninguém liberado para bater o ponto. ' +
+      'Procure o RH.</div>';
     return;
   }
   var busca = semAcento(el('buscaNome').value.trim());
@@ -927,11 +1144,16 @@ function pintaNomes(){
     return;
   }
   el('listaNomes').innerHTML = itens.map(function(c){
+    // Quem ainda nao criou o PIN precisa se reconhecer na lista: e por ali
+    // que ele entra no primeiro acesso.
+    var linha = c.temPin
+      ? '<span class="f">' + escapaHtml(c.funcao || '') + '</span>'
+      : '<span class="f novo">Primeiro acesso — criar meu PIN</span>';
     return '<button class="nome" data-id="' + escapaHtml(c.id) + '">' +
              '<span class="ini">' + escapaHtml(iniciais(c.nome)) + '</span>' +
              '<span class="txt">' +
                '<span class="n">' + escapaHtml(c.nome) + '</span>' +
-               '<span class="f">' + escapaHtml(c.funcao || '') + '</span>' +
+               linha +
              '</span>' +
              '<span class="seta">›</span>' +
            '</button>';
@@ -946,7 +1168,83 @@ el('listaNomes').addEventListener('click', function(ev){
   var id = b.getAttribute('data-id');
   escolhido = listaColabs.filter(function(c){ return c.id === id; })[0];
   if(!escolhido) return;
+  if(!escolhido.temPin){ abrePrimeiroAcesso(); return; }
   abrePin();
+});
+
+/* ---- Primeiro acesso ----
+   A pessoa se identifica pelo CPF e escolhe o proprio PIN. O RH nunca ve
+   o PIN de ninguem: se alguem esquecer, ele apaga o PIN na aba Equipe e a
+   pessoa refaz este caminho. */
+function abrePrimeiroAcesso(){
+  el('novoIni').textContent    = iniciais(escolhido.nome);
+  el('novoNome').textContent   = escolhido.nome;
+  el('novoFuncao').textContent = escolhido.funcao || '';
+  el('novoCpf').value = ''; el('novoPin').value = ''; el('novoPin2').value = '';
+  mostraMsg('novoMsg', '');
+  passo('novo');
+}
+
+/* Ponto e traco entram sozinhos: no celular, digitar so os numeros e
+   bem mais rapido do que caçar a pontuacao no teclado. */
+el('novoCpf').addEventListener('input', function(){
+  var d = this.value.replace(/\D/g, '').slice(0, 11);
+  var s = d;
+  if(d.length > 9)      s = d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9);
+  else if(d.length > 6) s = d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6);
+  else if(d.length > 3) s = d.slice(0,3)+'.'+d.slice(3);
+  this.value = s;
+});
+[['novoPin'], ['novoPin2']].forEach(function(par){
+  el(par[0]).addEventListener('input', function(){
+    this.value = this.value.replace(/\D/g, '').slice(0, 4);
+  });
+});
+
+el('btnVoltarNovo').addEventListener('click', function(){
+  escolhido = null;
+  el('buscaNome').value = '';
+  pintaNomes();
+  passo('nome');
+});
+
+el('btnCriarPin').addEventListener('click', function(){
+  if(ocupado || !escolhido) return;
+  var cpf  = el('novoCpf').value.replace(/\D/g, '');
+  var novo = el('novoPin').value;
+  var rep  = el('novoPin2').value;
+
+  if(cpf.length !== 11){ mostraMsg('novoMsg', 'Digite o seu CPF completo, os 11 números.', 'erro'); return; }
+  if(!/^\d{4}$/.test(novo)){ mostraMsg('novoMsg', 'O PIN precisa ter 4 números.', 'erro'); return; }
+  if(novo !== rep){
+    mostraMsg('novoMsg', 'Os dois PINs digitados não são iguais.', 'erro');
+    el('novoPin2').value = ''; el('novoPin2').focus();
+    return;
+  }
+
+  ocupado = true;
+  var b = el('btnCriarPin');
+  b.disabled = true; b.textContent = 'Criando...';
+  var deQuem = escolhido;
+  supa.rpc('ponto_primeiro_acesso', {
+    p_token: TOKEN, p_func: deQuem.id, p_cpf: cpf, p_pin: novo
+  }).then(function(res){
+    ocupado = false;
+    b.disabled = false; b.textContent = 'Criar meu PIN';
+    var d = res.data;
+    if(res.error || !d){ mostraMsg('novoMsg', 'Sem conexão. Tente de novo.', 'erro'); return; }
+    if(!d.ok){ mostraMsg('novoMsg', d.msg || 'Não deu para criar o PIN.', 'erro'); return; }
+
+    deQuem.temPin = true;
+    el('novoCpf').value = ''; el('novoPin').value = ''; el('novoPin2').value = '';
+    pintaNomes();
+    // Vai direto para o teclado: digitar o PIN recem-criado ja bate o ponto
+    // (ou abre o portal), e de quebra confirma que a pessoa memorizou.
+    abrePin();
+    el('pinMsg').className = 'msgPin neutra';
+    el('pinMsg').textContent = 'PIN criado. Digite ele agora para ' +
+      (modo === 'portal' ? 'abrir os seus registros.' : 'bater o seu ponto.');
+  });
 });
 
 function abrePin(){
@@ -1726,61 +2024,25 @@ function pintaEquipe(){
         '<span class="chip ' + (c.ativo ? 'ok' : 'nao') + '">' + (c.ativo ? 'liberado' : 'fora') + '</span>' +
       '</label></td>' +
       '<td>' + (c.temPin
-        ? '<span class="chip ok">cadastrado</span>'
-        : '<span class="chip ' + (c.ativo ? 'ruim' : 'nao') + '">falta</span>') + '</td>' +
+        ? '<span class="chip ok">criado</span>'
+        : '<span class="chip alerta">cria no 1º acesso</span>') + '</td>' +
       '<td style="text-align:right;white-space:nowrap;">' +
-        '<button class="btn fantasma pequeno btnPin" data-id="' + escapaHtml(c.id) + '" ' +
-                'data-nome="' + escapaHtml(c.nome) + '">' +
-          (c.temPin ? 'Trocar PIN' : 'Definir PIN') + '</button>' +
+        (c.temPin
+          ? '<button class="btn fantasma pequeno btnLiberar" data-id="' + escapaHtml(c.id) + '" ' +
+                    'data-nome="' + escapaHtml(c.nome) + '">Liberar 1º acesso</button>'
+          : '') +
       '</td></tr>';
   }).join('');
   html += '</tbody>';
   el('tabEquipe').innerHTML = html;
 
   if(soltos){
-    mostraMsg('equipeMsg', soltos + ' colaborador(es) liberado(s) ainda sem PIN — ' +
-      'eles não conseguem bater o ponto até você definir um.', 'erro');
+    mostraMsg('equipeMsg', soltos + ' pessoa(s) ainda vão criar o PIN no primeiro acesso. ' +
+      'Não há nada a fazer aqui — elas resolvem sozinhas ao ler o QR.', 'info');
   } else {
     mostraMsg('equipeMsg', '');
   }
 }
-
-el('btnGerarPins').addEventListener('click', function(){
-  var faltam = equipe.filter(function(c){ return c.ativo && !c.temPin; }).length;
-  if(!faltam){
-    mostraMsg('equipeMsg', 'Todo mundo que está liberado já tem PIN. ' +
-      'Para trocar o de alguém, use o botão da linha da pessoa.', 'info');
-    return;
-  }
-  if(!confirm('Sortear um PIN para ' + faltam + ' colaborador(es) sem PIN?\n\n' +
-              'A lista aparece UMA vez na tela, para você imprimir e entregar. ' +
-              'Depois disso o PIN não pode mais ser lido, só trocado.')) return;
-  var b = el('btnGerarPins');
-  b.disabled = true; b.textContent = 'Sorteando...';
-  supa.rpc('ponto_admin_pins_gerar', { p_todos: false }).then(function(res){
-    b.disabled = false; b.textContent = 'Sortear os PINs que faltam';
-    if(res.error){ mostraMsg('equipeMsg', res.error.message, 'erro'); return; }
-    var d = res.data || {};
-    el('listaPins').innerHTML =
-      '<div class="cartao" style="border:2px solid var(--brand);margin:0 0 16px;">' +
-        '<h3>PINs sorteados — anote ou imprima agora</h3>' +
-        '<p class="sub">Esta lista <b>não aparece de novo</b>. Entregue cada PIN só ' +
-        'para a pessoa dele.</p>' +
-        '<table class="tab"><thead><tr><th>Nome</th><th>Folha</th><th>PIN</th></tr></thead><tbody>' +
-        (d.itens || []).map(function(x){
-          return '<tr><td>' + escapaHtml(x.nome) + '</td><td>' + escapaHtml(x.folha || '—') +
-                 '</td><td style="font-size:19px;font-weight:800;letter-spacing:.12em;">' +
-                 escapaHtml(x.pin) + '</td></tr>';
-        }).join('') +
-        '</tbody></table>' +
-        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">' +
-          '<button class="btn fantasma pequeno" id="btnFecharPins">Já anotei, esconder</button>' +
-        '</div>' +
-      '</div>';
-    el('btnFecharPins').addEventListener('click', function(){ el('listaPins').innerHTML = ''; });
-    carregaEquipe();   // repinta a tabela; o aviso de "falta PIN" sai sozinho
-  });
-});
 
 el('tabEquipe').addEventListener('change', function(ev){
   var c = ev.target.closest('.chkAtivo');
@@ -1796,26 +2058,22 @@ el('tabEquipe').addEventListener('change', function(ev){
   });
 });
 
+/* Esqueceu o PIN? O RH nao escolhe outro por ela — apaga o que existe, e a
+   pessoa refaz o primeiro acesso escolhendo um PIN novo. Assim continua
+   valendo que so o dono conhece o proprio PIN. */
 el('tabEquipe').addEventListener('click', function(ev){
-  var b = ev.target.closest('.btnPin');
+  var b = ev.target.closest('.btnLiberar');
   if(!b) return;
   var nome = b.getAttribute('data-nome');
-  var novo = prompt('PIN de 4 números para ' + nome + ':\n\n' +
-                    '(deixe em branco e confirme para apagar o PIN)');
-  if(novo === null) return;
-  novo = novo.trim();
-  if(novo && !/^\d{4}$/.test(novo)){
-    mostraMsg('equipeMsg', 'O PIN precisa ter exatamente 4 números.', 'erro');
-    return;
-  }
-  supa.rpc('ponto_admin_pin', { p_func: b.getAttribute('data-id'), p_pin: novo })
+  if(!confirm('Liberar novo primeiro acesso para ' + nome + '?\n\n' +
+              'O PIN atual deixa de valer na hora. Na próxima vez que ' + nome +
+              ' ler o QR, vai confirmar o CPF e escolher um PIN novo.')) return;
+  supa.rpc('ponto_admin_pin', { p_func: b.getAttribute('data-id'), p_pin: '' })
     .then(function(res){
       if(res.error){ mostraMsg('equipeMsg', res.error.message, 'erro'); return; }
       if(res.data && res.data.ok === false){
         mostraMsg('equipeMsg', res.data.msg, 'erro'); return;
       }
-      mostraMsg('equipeMsg',
-        novo ? 'PIN de ' + nome + ' salvo. Avise a pessoa.' : 'PIN de ' + nome + ' apagado.', 'ok');
       carregaEquipe();
     });
 });
