@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#00532C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex, nofollow">
+<title>Ponto — Mercado e Açougue Godoy</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<style>
+  :root{
+    --brand:#00713C; --brand-dark:#00532C; --brand-soft:#E3F1E8;
+    --paper:#F4F1E8; --ink:#1C1F1B; --ink-soft:#5B6259;
+    --panel:#FFFFFF; --border:#D9DCD3; --border-suave:#E7EAE1;
+    --danger:#A32626; --danger-bg:#FBE7E7;
+    --aviso:#9A6114; --aviso-bg:#FAEEDC;
+    --shadow-sm:0 1px 2px rgba(28,31,27,.05), 0 3px 8px -4px rgba(28,31,27,.16);
+    --shadow:0 1px 2px rgba(28,31,27,.05), 0 6px 14px -7px rgba(28,31,27,.20),
+             0 16px 32px -20px rgba(28,31,27,.24);
+    --alto:5px;
+    --safe-b:env(safe-area-inset-bottom, 0px);
+    --tap:52px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;overflow-x:clip;max-width:100vw;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:var(--safe-b);
+  }
+  button{font-family:inherit;}
+
+  /* ---- Botao alto: parede solida embaixo, afunda ao tocar. Mesmo
+     comportamento do sistema de estoque, para nao parecer outro app. ---- */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    min-height:var(--tap); padding:0 20px; border:0; border-radius:12px;
+    background:var(--brand); color:#fff; font-size:16px; font-weight:700;
+    cursor:pointer; position:relative; top:0;
+    box-shadow:0 var(--alto) 0 var(--brand-dark), 0 8px 18px -8px rgba(0,83,44,.42);
+    transition:top .06s, box-shadow .06s;
+  }
+  .btn:active{top:var(--alto); box-shadow:0 0 0 var(--brand-dark);}
+  .btn[disabled]{opacity:.45; pointer-events:none;}
+  .btn.fantasma{
+    background:var(--panel); color:var(--ink-soft);
+    box-shadow:0 var(--alto) 0 var(--border), 0 8px 18px -8px rgba(28,31,27,.18);
+  }
+  .btn.perigo{
+    background:var(--danger); color:#fff;
+    box-shadow:0 var(--alto) 0 #7A1C1C, 0 8px 18px -8px rgba(163,38,38,.42);
+  }
+  .btn.bloco{width:100%;}
+  .btn.pequeno{min-height:38px; padding:0 13px; font-size:13.5px; border-radius:9px; --alto:3px;}
+
+  /* ======================= TELA DE BATIDA ======================= */
+  .topo{
+    background:var(--brand-dark); color:#fff; text-align:center;
+    padding:18px 16px 20px; box-shadow:0 2px 14px rgba(0,0,0,.16);
+  }
+  .topo .loja{font-size:13px; letter-spacing:.08em; text-transform:uppercase; opacity:.8;}
+  .topo .relogio{
+    font-size:clamp(46px,15vw,72px); font-weight:800; line-height:1;
+    margin:6px 0 2px; font-variant-numeric:tabular-nums; letter-spacing:-.02em;
+  }
+  .topo .relogio .seg{font-size:.45em; opacity:.6; font-weight:600; margin-left:2px;}
+  .topo .data{font-size:14.5px; opacity:.85;}
+
+  main{max-width:620px; margin:0 auto; padding:18px 16px 40px;}
+  h2.titulo{font-size:19px; margin:4px 0 14px; font-weight:700;}
+  .dica{font-size:13.5px; color:var(--ink-soft); margin:-8px 0 16px;}
+
+  .busca{
+    width:100%; min-height:var(--tap); padding:0 16px; font-size:16px;
+    border:1px solid var(--border); border-radius:12px; background:var(--panel);
+    color:var(--ink); margin-bottom:12px; box-shadow:var(--shadow-sm); font-family:inherit;
+  }
+  .busca:focus{outline:2px solid var(--brand); outline-offset:1px;}
+
+  .nomes{display:flex; flex-direction:column; gap:9px;}
+  .nome{
+    display:flex; align-items:center; gap:13px; width:100%; text-align:left;
+    min-height:66px; padding:10px 15px; cursor:pointer;
+    background:var(--panel); border:1px solid var(--border-suave);
+    border-radius:13px; box-shadow:var(--shadow-sm);
+    transition:transform .06s;
+  }
+  .nome:active{transform:scale(.985);}
+  .nome .ini{
+    flex:0 0 42px; height:42px; border-radius:50%;
+    background:var(--brand-soft); color:var(--brand-dark);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:15px;
+  }
+  .nome .txt{min-width:0; display:block;}
+  .nome .n{display:block; font-weight:700; font-size:15.5px; line-height:1.25;}
+  .nome .f{display:block; font-size:12.5px; color:var(--ink-soft);}
+  .nome .seta{margin-left:auto; color:var(--border); font-size:22px;}
+
+  /* ---- Teclado de PIN ---- */
+  .pinTopo{display:flex; align-items:center; gap:12px; margin-bottom:10px;}
+  .pinTopo .ini{
+    flex:0 0 46px; height:46px; border-radius:50%;
+    background:var(--brand-soft); color:var(--brand-dark);
+    display:flex; align-items:center; justify-content:center; font-weight:800;
+  }
+  .pinTopo .n{font-weight:700; font-size:17px; line-height:1.2;}
+  .pinTopo .f{font-size:12.5px; color:var(--ink-soft);}
+  .pontos{display:flex; justify-content:center; gap:16px; margin:22px 0 8px;}
+  .pontos i{
+    width:17px; height:17px; border-radius:50%;
+    background:transparent; border:2px solid var(--border);
+    transition:background .1s, border-color .1s, transform .1s;
+  }
+  .pontos i.on{background:var(--brand); border-color:var(--brand); transform:scale(1.12);}
+  .pontos.erro i{border-color:var(--danger);}
+  .pontos.erro{animation:tremer .35s;}
+  @keyframes tremer{
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-9px)}
+    40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(4px)}
+  }
+  .msgPin{
+    text-align:center; min-height:22px; font-size:14px; font-weight:600;
+    color:var(--danger); margin-bottom:12px;
+  }
+  .msgPin.neutra{color:var(--ink-soft); font-weight:500;}
+  .teclas{display:grid; grid-template-columns:repeat(3,1fr); gap:11px; max-width:330px; margin:0 auto;}
+  .tecla{
+    height:68px; border:1px solid var(--border-suave); border-radius:14px;
+    background:var(--panel); color:var(--ink); font-size:27px; font-weight:600;
+    cursor:pointer; box-shadow:var(--shadow-sm); position:relative; top:0;
+    transition:top .05s, box-shadow .05s, background .05s;
+  }
+  .tecla:active{top:2px; box-shadow:none; background:var(--brand-soft);}
+  .tecla.aux{
+    font-size:15px; font-weight:700; color:var(--ink-soft);
+    background:transparent; box-shadow:none; border-color:transparent;
+  }
+
+  /* ---- Resultado ---- */
+  .resultado{text-align:center; padding:14px 0 8px;}
+  .selo{
+    width:96px; height:96px; margin:0 auto 18px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--brand); color:#fff; font-size:52px; font-weight:700;
+    box-shadow:0 10px 30px -8px rgba(0,113,60,.55);
+    animation:pop .32s cubic-bezier(.2,1.4,.4,1);
+  }
+  .selo.ruim{background:var(--danger); box-shadow:0 10px 30px -8px rgba(163,38,38,.5);}
+  .selo.avisa{background:var(--aviso); box-shadow:0 10px 30px -8px rgba(154,97,20,.5);}
+  @keyframes pop{from{transform:scale(.4); opacity:0} to{transform:scale(1); opacity:1}}
+  .resultado .quem{font-size:20px; font-weight:800; margin-bottom:2px;}
+  .resultado .oque{font-size:15px; color:var(--ink-soft);}
+  .resultado .hora{
+    font-size:60px; font-weight:800; line-height:1.05; margin:12px 0 4px;
+    font-variant-numeric:tabular-nums; letter-spacing:-.03em;
+  }
+  .resultado .obs{font-size:14px; margin-top:10px; font-weight:600;}
+  .resultado .obs.atrasou{color:var(--aviso);}
+  .resultado .obs.ok{color:var(--brand);}
+
+  .resumo{
+    background:var(--panel); border:1px solid var(--border-suave); border-radius:13px;
+    box-shadow:var(--shadow-sm); margin:22px 0 18px; overflow:hidden; text-align:left;
+  }
+  .resumo h3{
+    margin:0; padding:11px 15px; font-size:11.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-soft); background:#FAFBF8;
+    border-bottom:1px solid var(--border-suave); font-weight:700;
+  }
+  .resumo .linha{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:11px 15px; border-bottom:1px solid var(--border-suave); font-size:14.5px;
+  }
+  .resumo .linha:last-child{border-bottom:0;}
+  .resumo .linha b{font-variant-numeric:tabular-nums; font-size:16px;}
+  .resumo .linha.vazia{color:var(--ink-soft);}
+  .resumo .linha.vazia b{color:var(--border); font-weight:500;}
+
+  .aviso{
+    background:var(--aviso-bg); border:1px solid #E8CFA6; color:#6B4409;
+    border-radius:11px; padding:12px 14px; font-size:13.5px; margin:14px 0;
+  }
+  .erroCaixa{
+    background:var(--danger-bg); border:1px solid #EFC4C4; color:#7A1C1C;
+    border-radius:11px; padding:12px 14px; font-size:14px; margin:14px 0;
+  }
+  .contador{font-size:12.5px; color:var(--ink-soft); margin-top:14px;}
+  .rodape{text-align:center; padding:26px 16px 32px;}
+  .rodape a{color:var(--ink-soft); font-size:12px; text-decoration:none; opacity:.55; cursor:pointer;}
+
+  /* ======================= ADMIN ======================= */
+  .adTopo{
+    background:var(--brand-dark); color:#fff; padding:14px 16px;
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .adTopo h1{font-size:17px; margin:0; font-weight:700;}
+  .adTopo .quem{font-size:12.5px; opacity:.8; margin-left:auto;}
+  .abas{
+    display:flex; gap:4px; overflow-x:auto; background:var(--brand-dark);
+    padding:0 12px 12px; scrollbar-width:none;
+  }
+  .abas::-webkit-scrollbar{display:none;}
+  .aba{
+    flex:0 0 auto; border:0; background:rgba(255,255,255,.12); color:#fff;
+    padding:9px 15px; border-radius:9px; font-size:13.5px; font-weight:600;
+    cursor:pointer; white-space:nowrap;
+  }
+  .aba.on{background:#fff; color:var(--brand-dark);}
+  .painel{max-width:960px; margin:0 auto; padding:20px 16px 60px;}
+  .cartao{
+    background:var(--panel); border:1px solid var(--border-suave); border-radius:14px;
+    box-shadow:var(--shadow-sm); padding:18px; margin-bottom:16px;
+  }
+  .cartao h3{margin:0 0 4px; font-size:16px;}
+  .cartao p.sub{margin:0 0 16px; font-size:13.5px; color:var(--ink-soft); line-height:1.55;}
+  label.campo{display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:0 0 5px;}
+  input[type=text],input[type=password],input[type=email],input[type=number],
+  input[type=month],input[type=date],input[type=time]{
+    width:100%; min-height:44px; padding:0 12px; font-size:15px; font-family:inherit;
+    border:1px solid var(--border); border-radius:10px; background:#fff; color:var(--ink);
+  }
+  input:focus{outline:2px solid var(--brand); outline-offset:1px;}
+  .linhaCampos{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;}
+  .linhaCampos > div{flex:1 1 150px;}
+  table.tab{width:100%; border-collapse:collapse; font-size:13.5px;}
+  table.tab th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--ink-soft); padding:8px; border-bottom:2px solid var(--border); white-space:nowrap;
+  }
+  table.tab td{padding:9px 8px; border-bottom:1px solid var(--border-suave); vertical-align:middle;}
+  table.tab tr:last-child td{border-bottom:0;}
+  .chip{display:inline-block; padding:2px 9px; border-radius:99px; font-size:11.5px; font-weight:700;}
+  .chip.ok{background:var(--brand-soft); color:var(--brand-dark);}
+  .chip.nao{background:#EDEFEA; color:var(--ink-soft);}
+  .chip.alerta{background:var(--aviso-bg); color:#6B4409;}
+  .chip.ruim{background:var(--danger-bg); color:#7A1C1C;}
+  .horas{font-variant-numeric:tabular-nums; font-weight:600;}
+  .horas .falta{color:var(--border); font-weight:500;}
+  .rolagem{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .msg{padding:11px 14px; border-radius:10px; font-size:14px; margin:12px 0; display:none;}
+  .msg.ok{background:var(--brand-soft); color:var(--brand-dark); display:block;}
+  .msg.erro{background:var(--danger-bg); color:#7A1C1C; display:block;}
+  .msg.info{background:#EEF1EC; color:var(--ink-soft); display:block;}
+  .escalaTab input[type=time]{min-height:36px; font-size:13px; padding:0 6px;}
+  .escalaTab td{padding:5px 4px;}
+
+  /* ---- Cartaz do QR ---- */
+  #qrArea{text-align:center;}
+  .cartaz{
+    background:#fff; color:#111; border:1px solid var(--border);
+    border-radius:14px; padding:34px 30px; text-align:center; max-width:640px; margin:0 auto;
+  }
+  .cartaz .ctLoja{font-size:15px; letter-spacing:.16em; text-transform:uppercase; color:#555;}
+  .cartaz .ctTit{font-size:40px; font-weight:800; margin:6px 0 4px; letter-spacing:-.02em;}
+  .cartaz .ctSub{font-size:17px; color:#555; margin-bottom:26px;}
+  .cartaz .ctQr{display:inline-block; padding:16px; border:3px solid #111; border-radius:16px;}
+  .cartaz .ctQr svg{width:300px; height:300px; display:block;}
+  .cartaz .ctPassos{text-align:left; max-width:410px; margin:28px auto 0; font-size:16px; line-height:1.85;}
+  .cartaz .ctPassos b{display:inline-block; width:26px;}
+  .cartaz .ctRodape{margin-top:24px; font-size:13px; color:#777;}
+
+  @media print{
+    body{background:#fff;}
+    /* Na impressao sobra so o cartaz: nada de menu, abas ou botoes. */
+    .naoImprimir, .adTopo, .abas, .topo, .rodape{display:none !important;}
+    .painel{padding:0; max-width:none;}
+    .cartaz{border:0; padding:0; max-width:none;}
+    .cartaz .ctQr svg{width:380px; height:380px;}
+    .cartaz .ctTit{font-size:46px;}
+    @page{margin:16mm;}
+  }
+  @media (max-width:560px){
+    .painel{padding:16px 12px 60px;}
+    .cartao{padding:14px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== TELA DO COLABORADOR ==================== -->
+<div id="telaBatida">
+  <div class="topo">
+    <div class="loja" id="topoLoja">Mercado e Açougue Godoy</div>
+    <div class="relogio" id="relogio">--:--<span class="seg" id="relogioSeg"></span></div>
+    <div class="data" id="dataHoje">&nbsp;</div>
+  </div>
+
+  <main>
+    <!-- passo 1: escolher o nome -->
+    <section id="passoNome">
+      <h2 class="titulo">Toque no seu nome</h2>
+      <p class="dica" id="dicaNome">Depois é só digitar o seu PIN de 4 números.</p>
+      <input class="busca" id="buscaNome" type="text" autocomplete="off"
+             placeholder="Buscar meu nome..." aria-label="Buscar meu nome">
+      <div class="nomes" id="listaNomes"></div>
+      <div id="avisoLista"></div>
+    </section>
+
+    <!-- passo 2: PIN -->
+    <section id="passoPin" hidden>
+      <div class="pinTopo">
+        <div class="ini" id="pinIni"></div>
+        <div>
+          <div class="n" id="pinNome"></div>
+          <div class="f" id="pinFuncao"></div>
+        </div>
+      </div>
+      <p class="dica">Digite seu PIN de 4 números para registrar o ponto.</p>
+      <div class="pontos" id="pinPontos"><i></i><i></i><i></i><i></i></div>
+      <div class="msgPin neutra" id="pinMsg">&nbsp;</div>
+      <div class="teclas" id="teclado"></div>
+      <div style="margin-top:20px; text-align:center;">
+        <button class="btn fantasma pequeno" id="btnVoltarNome">Não sou eu, voltar</button>
+      </div>
+    </section>
+
+    <!-- passo 3: resultado -->
+    <section id="passoOk" hidden>
+      <div class="resultado" id="areaResultado"></div>
+      <button class="btn bloco" id="btnConcluir">Pronto</button>
+      <div class="contador" id="contadorVolta"></div>
+    </section>
+  </main>
+
+  <div class="rodape naoImprimir">
+    <a id="linkAdmin">Administração</a>
+  </div>
+</div>
+
+<!-- ==================== TELA DE ADMINISTRAÇÃO ==================== -->
+<div id="telaAdmin" hidden>
+
+  <!-- login -->
+  <div id="adLogin">
+    <div class="topo">
+      <div class="loja">Ponto por QR Code</div>
+      <div style="font-size:22px;font-weight:800;margin-top:8px;">Administração</div>
+    </div>
+    <main>
+      <div class="cartao">
+        <h3>Entrar</h3>
+        <p class="sub">Use o mesmo e-mail e senha do sistema. É preciso ter acesso ao módulo de RH.</p>
+        <div style="margin-bottom:12px;">
+          <label class="campo" for="adEmail">E-mail</label>
+          <input type="email" id="adEmail" autocomplete="username" inputmode="email">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label class="campo" for="adSenha">Senha</label>
+          <input type="password" id="adSenha" autocomplete="current-password">
+        </div>
+        <div class="msg" id="adLoginMsg"></div>
+        <button class="btn bloco" id="btnEntrar">Entrar</button>
+        <div style="margin-top:14px; text-align:center;">
+          <a style="font-size:13px;color:var(--ink-soft);cursor:pointer;" id="linkVoltarBatida">Voltar para a tela de ponto</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- painel -->
+  <div id="adPainel" hidden>
+    <div class="adTopo">
+      <h1>Ponto por QR Code</h1>
+      <div class="quem"><span id="adQuem"></span> · <a style="color:#fff;cursor:pointer;text-decoration:underline;" id="btnSair">sair</a></div>
+    </div>
+    <div class="abas">
+      <button class="aba on" data-aba="qr">Cartaz / QR</button>
+      <button class="aba" data-aba="hoje">Batidas do dia</button>
+      <button class="aba" data-aba="equipe">Equipe e PINs</button>
+      <button class="aba" data-aba="escalas">Escalas</button>
+      <button class="aba" data-aba="local">Local e regras</button>
+      <button class="aba" data-aba="fechar">Fechar o mês</button>
+    </div>
+
+    <div class="painel">
+
+      <!-- ABA: QR -->
+      <div class="vista" id="vQr">
+        <div class="cartao naoImprimir">
+          <h3>O cartaz para colar na parede</h3>
+          <p class="sub">
+            O QR aponta para o endereço onde esta página está publicada, junto com um código
+            secreto. Sem esse código o endereço não abre a lista de nomes — por isso, se o cartaz
+            for parar em mãos erradas, basta gerar um código novo e reimprimir.
+          </p>
+          <div class="msg info" id="qrUrlBox"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn" id="btnImprimir">Imprimir o cartaz</button>
+            <button class="btn fantasma" id="btnCopiarLink">Copiar o link</button>
+            <button class="btn fantasma" id="btnNovoToken">Gerar código novo</button>
+          </div>
+          <div class="msg" id="qrMsg"></div>
+        </div>
+        <div id="qrArea"></div>
+      </div>
+
+      <!-- ABA: HOJE -->
+      <div class="vista" id="vHoje" hidden>
+        <div class="cartao">
+          <div class="linhaCampos" style="margin-bottom:14px;">
+            <div style="flex:0 0 190px;">
+              <label class="campo" for="hojeData">Dia</label>
+              <input type="date" id="hojeData">
+            </div>
+            <div style="flex:0 0 auto;">
+              <button class="btn pequeno" id="btnRecarregarDia">Atualizar</button>
+            </div>
+          </div>
+          <p class="sub" style="margin:0;">
+            Quem esqueceu de bater aparece com o horário em branco. Clique no horário para
+            lançar ou corrigir na mão — a correção fica registrada como manual.
+          </p>
+        </div>
+        <div class="cartao">
+          <div class="rolagem"><table class="tab" id="tabHoje"></table></div>
+          <div class="msg" id="hojeMsg"></div>
+        </div>
+      </div>
+
+      <!-- ABA: EQUIPE -->
+      <div class="vista" id="vEquipe" hidden>
+        <div class="cartao">
+          <h3>Quem pode bater o ponto</h3>
+          <p class="sub">
+            Só quem está <b>liberado</b> e tem <b>PIN</b> aparece na tela do QR. O PIN tem 4 números
+            e é pessoal — depois de salvo ele não pode mais ser lido, apenas trocado.
+          </p>
+          <div class="rolagem"><table class="tab" id="tabEquipe"></table></div>
+          <div class="msg" id="equipeMsg"></div>
+        </div>
+      </div>
+
+      <!-- ABA: ESCALAS -->
+      <div class="vista" id="vEscalas" hidden>
+        <div class="cartao">
+          <h3>Horário de trabalho</h3>
+          <p class="sub">
+            É o mesmo quadro do cartão ponto. Dia em branco = folga. O sistema usa isso para
+            saber o que é atraso e o que é hora extra.
+          </p>
+          <div style="margin-bottom:14px;">
+            <label class="campo" for="selEscala">Colaborador</label>
+            <select id="selEscala" class="busca" style="margin-bottom:0;"></select>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+            <button class="btn fantasma pequeno" id="btnEscalaA">Aplicar escala até 18:00 (dom. folga)</button>
+            <button class="btn fantasma pequeno" id="btnEscalaB">Aplicar escala até 18:30 (dom. 07:30–13:00)</button>
+            <button class="btn fantasma pequeno" id="btnEscalaLimpar">Limpar tudo</button>
+          </div>
+          <div class="rolagem"><table class="tab escalaTab" id="tabEscala"></table></div>
+          <div style="margin-top:16px;">
+            <button class="btn" id="btnSalvarEscala">Salvar horário</button>
+          </div>
+          <div class="msg" id="escalaMsg"></div>
+        </div>
+      </div>
+
+      <!-- ABA: LOCAL -->
+      <div class="vista" id="vLocal" hidden>
+        <div class="cartao">
+          <h3>Local da empresa</h3>
+          <p class="sub">
+            Abra esta página <b>de dentro do mercado</b> e toque em capturar. A batida só é aceita
+            dentro do raio que você definir — assim ninguém bate o ponto de casa com uma foto do QR.
+          </p>
+          <div class="linhaCampos" style="margin-bottom:14px;">
+            <div><label class="campo" for="cfgLat">Latitude</label><input type="text" id="cfgLat" inputmode="decimal"></div>
+            <div><label class="campo" for="cfgLng">Longitude</label><input type="text" id="cfgLng" inputmode="decimal"></div>
+            <div style="flex:0 0 120px;"><label class="campo" for="cfgRaio">Raio (m)</label><input type="number" id="cfgRaio" min="30" max="5000" step="10"></div>
+          </div>
+          <button class="btn fantasma" id="btnCapturarLocal">Usar a minha localização de agora</button>
+          <div class="msg" id="localMsg"></div>
+        </div>
+        <div class="cartao">
+          <h3>Regras</h3>
+          <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:16px;">
+            <label style="display:flex;gap:10px;align-items:flex-start;font-size:14.5px;cursor:pointer;">
+              <input type="checkbox" id="cfgExigirGps" style="margin-top:3px;width:18px;height:18px;">
+              <span><b>Exigir estar no local</b><br>
+                <span style="font-size:13px;color:var(--ink-soft);">Sem GPS ou fora do raio, a batida é recusada.
+                Se estiver desmarcado, a batida passa mas fica gravada a distância.</span></span>
+            </label>
+            <label style="display:flex;gap:10px;align-items:flex-start;font-size:14.5px;cursor:pointer;">
+              <input type="checkbox" id="cfgAtivo" style="margin-top:3px;width:18px;height:18px;">
+              <span><b>Ponto por QR ligado</b><br>
+                <span style="font-size:13px;color:var(--ink-soft);">Desligue quando o relógio voltar da manutenção.</span></span>
+            </label>
+          </div>
+          <div style="max-width:220px;margin-bottom:16px;">
+            <label class="campo" for="cfgJanela">Ignorar leitura repetida por (minutos)</label>
+            <input type="number" id="cfgJanela" min="0" max="60" step="1">
+          </div>
+          <button class="btn" id="btnSalvarCfg">Salvar regras</button>
+          <div class="msg" id="cfgMsg"></div>
+        </div>
+      </div>
+
+      <!-- ABA: FECHAR -->
+      <div class="vista" id="vFechar" hidden>
+        <div class="cartao">
+          <h3>Levar as batidas para o cartão ponto</h3>
+          <p class="sub">
+            Monta o mês no mesmo formato do arquivo que vinha do relógio, e grava no Controle de
+            Ponto. Depois disso o cálculo de horas, atrasos e extras acontece lá, como sempre.
+            Pode rodar quantas vezes quiser — ele sempre refaz o mês inteiro a partir das batidas.
+          </p>
+          <div class="linhaCampos" style="margin-bottom:16px;">
+            <div style="flex:0 0 190px;">
+              <label class="campo" for="fecharMes">Mês</label>
+              <input type="month" id="fecharMes">
+            </div>
+            <div style="flex:0 0 auto;"><button class="btn" id="btnConsolidar">Consolidar</button></div>
+          </div>
+          <div class="msg" id="fecharMsg"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ====================================================================
+   CONEXÃO
+   O mesmo projeto Supabase dos outros módulos. A chave publicável é
+   pública de propósito: quem não tem o código do QR não consegue nem
+   listar os nomes, e quem não tem login de RH não alcança nada do admin.
+   ==================================================================== */
+var SUPABASE_URL = "https://vieafcgghboxwhultile.supabase.co";
+var SUPABASE_KEY = "sb_publishable_HaMcgvr_2xmWYotvzetmVA_yscPz2eT";
+
+var supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'ponto_qr_auth' }
+});
+
+var el = function(id){ return document.getElementById(id); };
+var DIAS_SEM = ['dom','seg','ter','qua','qui','sex','sab'];
+var DIAS_NOME = {dom:'Domingo', seg:'Segunda', ter:'Terça', qua:'Quarta',
+                 qui:'Quinta', sex:'Sexta', sab:'Sábado'};
+
+function escapaHtml(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function semAcento(s){
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+}
+function iniciais(nome){
+  var p = String(nome || '').trim().split(/\s+/).filter(function(x){ return x.length > 2; });
+  if(!p.length) return '?';
+  return (p[0][0] + (p.length > 1 ? p[p.length-1][0] : '')).toUpperCase();
+}
+function hhmm(min){
+  if(min == null) return '';
+  var h = Math.floor(min/60), m = min % 60;
+  return (h<10?'0':'') + h + ':' + (m<10?'0':'') + m;
+}
+function paraMin(txt){
+  var m = /^(\d{1,2}):(\d{2})$/.exec(String(txt || '').trim());
+  if(!m) return null;
+  var v = (+m[1])*60 + (+m[2]);
+  return (v >= 0 && v <= 1439) ? v : null;
+}
+function mostraMsg(id, texto, tipo){
+  var c = el(id);
+  if(!c) return;
+  if(!texto){ c.className = 'msg'; c.textContent = ''; return; }
+  c.className = 'msg ' + (tipo || 'info');
+  c.textContent = texto;
+}
+
+/* ====================================================================
+   RELÓGIO
+   Mostra a hora do SERVIDOR, não a do aparelho. Se o celular estiver
+   com a hora errada, o colaborador vê a hora certa — e é a do servidor
+   que vai para a batida, de qualquer jeito.
+   ==================================================================== */
+var deltaServidor = 0;   // ms a somar no relógio local
+
+function marcaHoraServidor(iso){
+  if(!iso) return;
+  var t = Date.parse(iso.replace(' ','T'));
+  if(!isNaN(t)) deltaServidor = t - Date.now();
+}
+function agora(){ return new Date(Date.now() + deltaServidor); }
+
+function pintaRelogio(){
+  var d = agora();
+  var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+  var r = el('relogio');
+  if(r){
+    r.firstChild.nodeValue = (h<10?'0':'') + h + ':' + (m<10?'0':'') + m;
+    el('relogioSeg').textContent = (s<10?'0':'') + s;
+  }
+  var dt = el('dataHoje');
+  if(dt){
+    var txt = d.toLocaleDateString('pt-BR', {
+      weekday:'long', day:'2-digit', month:'long', year:'numeric'
+    });
+    dt.textContent = txt.charAt(0).toUpperCase() + txt.slice(1);
+  }
+}
+setInterval(pintaRelogio, 1000);
+pintaRelogio();
+
+/* ====================================================================
+   TELA DO COLABORADOR
+   ==================================================================== */
+var TOKEN = '';
+var listaColabs = [];
+var exigeGps = false;
+var escolhido = null;
+var pin = '';
+var ocupado = false;
+var timerVolta = null;
+
+function leToken(){
+  var h = location.hash || '';
+  var m = /[#&]t=([^&]+)/.exec(h);
+  if(m) return decodeURIComponent(m[1]);
+  var q = new URLSearchParams(location.search);
+  return q.get('t') || '';
+}
+
+function passo(qual){
+  el('passoNome').hidden = qual !== 'nome';
+  el('passoPin').hidden  = qual !== 'pin';
+  el('passoOk').hidden   = qual !== 'ok';
+  if(timerVolta){ clearInterval(timerVolta); timerVolta = null; }
+}
+
+function carregaLista(){
+  if(!TOKEN){
+    el('listaNomes').innerHTML = '';
+    el('avisoLista').innerHTML =
+      '<div class="erroCaixa">Este endereço está incompleto. Use o QR Code colado na parede.</div>';
+    return;
+  }
+  supa.rpc('ponto_qr_lista', { p_token: TOKEN }).then(function(res){
+    var d = res.data;
+    if(res.error || !d || !d.ok){
+      var motivo = d && d.erro === 'desativado'
+        ? 'O ponto por QR está desligado no momento. Procure o RH.'
+        : 'Este QR não está mais valendo. Procure o RH para pegar o novo.';
+      el('avisoLista').innerHTML = '<div class="erroCaixa">' + motivo + '</div>';
+      return;
+    }
+    marcaHoraServidor(d.agora);
+    pintaRelogio();
+    if(d.empresa) el('topoLoja').textContent = d.empresa;
+    exigeGps = !!d.exigirGps;
+    listaColabs = d.colaboradores || [];
+    el('avisoLista').innerHTML = '';
+    pintaNomes();
+  });
+}
+
+function pintaNomes(){
+  var busca = semAcento(el('buscaNome').value.trim());
+  var itens = listaColabs.filter(function(c){
+    return !busca || semAcento(c.nome).indexOf(busca) >= 0;
+  });
+  if(!itens.length){
+    el('listaNomes').innerHTML =
+      '<div class="aviso">Nenhum nome encontrado. Apague a busca para ver todos.</div>';
+    return;
+  }
+  el('listaNomes').innerHTML = itens.map(function(c){
+    return '<button class="nome" data-id="' + escapaHtml(c.id) + '">' +
+             '<span class="ini">' + escapaHtml(iniciais(c.nome)) + '</span>' +
+             '<span class="txt">' +
+               '<span class="n">' + escapaHtml(c.nome) + '</span>' +
+               '<span class="f">' + escapaHtml(c.funcao || '') + '</span>' +
+             '</span>' +
+             '<span class="seta">›</span>' +
+           '</button>';
+  }).join('');
+}
+
+el('buscaNome').addEventListener('input', pintaNomes);
+
+el('listaNomes').addEventListener('click', function(ev){
+  var b = ev.target.closest('.nome');
+  if(!b) return;
+  var id = b.getAttribute('data-id');
+  escolhido = listaColabs.filter(function(c){ return c.id === id; })[0];
+  if(!escolhido) return;
+  abrePin();
+});
+
+function abrePin(){
+  pin = '';
+  el('pinIni').textContent = iniciais(escolhido.nome);
+  el('pinNome').textContent = escolhido.nome;
+  el('pinFuncao').textContent = escolhido.funcao || '';
+  el('pinMsg').textContent = ' ';
+  el('pinMsg').className = 'msgPin neutra';
+  pintaPontos();
+  passo('pin');
+}
+
+function pintaPontos(erro){
+  var c = el('pinPontos');
+  c.className = 'pontos' + (erro ? ' erro' : '');
+  var bolas = c.children;
+  for(var i = 0; i < bolas.length; i++){
+    bolas[i].className = i < pin.length ? 'on' : '';
+  }
+  if(erro) setTimeout(function(){ c.className = 'pontos'; }, 400);
+}
+
+/* teclado numérico: 1..9, apagar, 0, (vazio) */
+(function montaTeclado(){
+  var html = '';
+  for(var n = 1; n <= 9; n++) html += '<button class="tecla" data-t="' + n + '">' + n + '</button>';
+  html += '<button class="tecla aux" data-t="del">apagar</button>';
+  html += '<button class="tecla" data-t="0">0</button>';
+  html += '<span></span>';
+  el('teclado').innerHTML = html;
+})();
+
+el('teclado').addEventListener('click', function(ev){
+  var b = ev.target.closest('.tecla');
+  if(!b || ocupado) return;
+  var t = b.getAttribute('data-t');
+  if(t === 'del'){
+    pin = pin.slice(0, -1);
+    pintaPontos();
+    return;
+  }
+  if(pin.length >= 4) return;
+  pin += t;
+  pintaPontos();
+  if(pin.length === 4) setTimeout(bater, 140);
+});
+
+el('btnVoltarNome').addEventListener('click', function(){
+  escolhido = null; pin = '';
+  el('buscaNome').value = '';
+  pintaNomes();
+  passo('nome');
+});
+
+/* ---- pega a localização, mas nunca trava a tela esperando ---- */
+function pegaLocal(callback){
+  if(!navigator.geolocation || !exigeGps){
+    if(!navigator.geolocation) return callback(null);
+    // mesmo sem exigir, tenta rápido para gravar a distância
+  }
+  var respondeu = false;
+  var prazo = setTimeout(function(){
+    if(!respondeu){ respondeu = true; callback(null); }
+  }, 12000);
+
+  navigator.geolocation.getCurrentPosition(
+    function(p){
+      if(respondeu) return;
+      respondeu = true; clearTimeout(prazo);
+      callback({ lat:p.coords.latitude, lng:p.coords.longitude, prec:p.coords.accuracy });
+    },
+    function(){
+      if(respondeu) return;
+      respondeu = true; clearTimeout(prazo);
+      callback(null);
+    },
+    { enableHighAccuracy:true, timeout:11000, maximumAge:20000 }
+  );
+}
+
+function bater(){
+  if(ocupado || !escolhido) return;
+  ocupado = true;
+  el('pinMsg').className = 'msgPin neutra';
+  el('pinMsg').textContent = exigeGps ? 'Conferindo a sua localização...' : 'Registrando...';
+
+  pegaLocal(function(loc){
+    supa.rpc('ponto_qr_bater', {
+      p_token: TOKEN,
+      p_func:  escolhido.id,
+      p_pin:   pin,
+      p_lat:   loc ? loc.lat : null,
+      p_lng:   loc ? loc.lng : null,
+      p_prec:  loc ? Math.round(loc.prec) : null,
+      p_disp:  navigator.userAgent
+    }).then(function(res){
+      ocupado = false;
+      var d = res.data;
+      if(res.error || !d){
+        el('pinMsg').className = 'msgPin';
+        el('pinMsg').textContent = 'Sem conexão. Tente de novo.';
+        pin = ''; pintaPontos(true);
+        return;
+      }
+      if(!d.ok){
+        el('pinMsg').className = 'msgPin';
+        el('pinMsg').textContent = d.msg || 'Não deu para registrar.';
+        pin = ''; pintaPontos(true);
+        return;
+      }
+      mostraResultado(d);
+    });
+  });
+}
+
+function mostraResultado(d){
+  var atrasoMin = null;
+  if(d.previstoSlot != null && d.slot === 1){
+    var prev = +d.previstoSlot;
+    var feito = paraMin(d.hora);
+    if(feito != null && !isNaN(prev)) atrasoMin = feito - prev;
+  }
+
+  var selo = 'ok', simbolo = '✓';
+  if(atrasoMin != null && atrasoMin > 5){ selo = 'avisa'; simbolo = '!'; }
+
+  var obs = '';
+  if(d.repetida){
+    obs = '<div class="obs">Esta batida já estava registrada.</div>';
+  } else if(atrasoMin != null && atrasoMin > 5){
+    obs = '<div class="obs atrasou">' + atrasoMin + ' minutos depois do horário (' +
+          escapaHtml(hhmm(+d.previstoSlot)) + ').</div>';
+  } else if(atrasoMin != null){
+    obs = '<div class="obs ok">No horário.</div>';
+  }
+
+  var rotulos = ['Entrada','Saída para o almoço','Volta do almoço','Saída','Entrada extra','Saída extra'];
+  var feitas = {};
+  (d.batidas || []).forEach(function(b){ feitas[b.slot] = b.hora; });
+  var quantas = Math.max(4, (d.batidas || []).length);
+  var linhas = '';
+  for(var s = 1; s <= quantas; s++){
+    var h = feitas[s];
+    linhas += '<div class="linha' + (h ? '' : ' vazia') + '">' +
+                '<span>' + rotulos[s-1] + '</span>' +
+                '<b>' + (h || '--:--') + '</b>' +
+              '</div>';
+  }
+
+  el('areaResultado').innerHTML =
+    '<div class="selo ' + selo + '">' + simbolo + '</div>' +
+    '<div class="quem">' + escapaHtml(d.nome) + '</div>' +
+    '<div class="oque">' + escapaHtml(d.rotulo) + ' registrada</div>' +
+    '<div class="hora">' + escapaHtml(d.hora) + '</div>' +
+    obs +
+    '<div class="resumo"><h3>Seu dia até agora</h3>' + linhas + '</div>';
+
+  passo('ok');
+
+  var resta = 12;
+  el('contadorVolta').textContent = 'Voltando em ' + resta + 's...';
+  timerVolta = setInterval(function(){
+    resta--;
+    if(resta <= 0){ voltaInicio(); return; }
+    el('contadorVolta').textContent = 'Voltando em ' + resta + 's...';
+  }, 1000);
+}
+
+function voltaInicio(){
+  if(timerVolta){ clearInterval(timerVolta); timerVolta = null; }
+  escolhido = null; pin = '';
+  el('buscaNome').value = '';
+  pintaNomes();
+  passo('nome');
+}
+
+el('btnConcluir').addEventListener('click', voltaInicio);
+
+/* ====================================================================
+   ADMIN
+   ==================================================================== */
+var cfgAtual = {};
+var equipe = [];
+var escalaEdit = null;
+
+function mostraAdmin(sim){
+  el('telaBatida').hidden = !!sim;
+  el('telaAdmin').hidden  = !sim;
+}
+
+el('linkAdmin').addEventListener('click', function(){
+  mostraAdmin(true);
+  supa.auth.getSession().then(function(r){
+    entrou(r.data ? r.data.session : null);
+  });
+});
+el('linkVoltarBatida').addEventListener('click', function(){
+  mostraAdmin(false);
+});
+
+el('btnEntrar').addEventListener('click', function(){
+  var email = el('adEmail').value.trim();
+  var senha = el('adSenha').value;
+  if(!email || !senha){ mostraMsg('adLoginMsg', 'Preencha e-mail e senha.', 'erro'); return; }
+  var b = this;
+  b.disabled = true; b.textContent = 'Entrando...';
+  supa.auth.signInWithPassword({ email: email, password: senha }).then(function(res){
+    b.disabled = false; b.textContent = 'Entrar';
+    if(res.error){
+      mostraMsg('adLoginMsg',
+        /Invalid login/i.test(res.error.message) ? 'E-mail ou senha incorretos.' : res.error.message,
+        'erro');
+      return;
+    }
+    mostraMsg('adLoginMsg', '');
+    entrou(res.data.session);
+  });
+});
+
+el('btnSair').addEventListener('click', function(){
+  supa.auth.signOut().then(function(){
+    el('adPainel').hidden = true;
+    el('adLogin').hidden = false;
+  });
+});
+
+function entrou(sessao){
+  if(!sessao){
+    el('adPainel').hidden = true;
+    el('adLogin').hidden = false;
+    return;
+  }
+  // pode_rh() é conferido no banco; se não puder, a chamada estoura
+  supa.rpc('ponto_admin_cfg_ler').then(function(res){
+    if(res.error){
+      mostraMsg('adLoginMsg', 'Este login não tem acesso ao módulo de RH.', 'erro');
+      supa.auth.signOut();
+      return;
+    }
+    cfgAtual = res.data || {};
+    el('adQuem').textContent = sessao.user.email || '';
+    el('adLogin').hidden = true;
+    el('adPainel').hidden = false;
+    pintaQr();
+    preencheCfg();
+    var hoje = new Date();
+    el('hojeData').value = hoje.toISOString().slice(0,10);
+    el('fecharMes').value = hoje.toISOString().slice(0,7);
+    carregaEquipe();
+    carregaDia();
+  });
+}
+
+/* ---- abas ---- */
+Array.prototype.forEach.call(document.querySelectorAll('.aba'), function(b){
+  b.addEventListener('click', function(){
+    Array.prototype.forEach.call(document.querySelectorAll('.aba'), function(x){
+      x.classList.toggle('on', x === b);
+    });
+    var qual = b.getAttribute('data-aba');
+    var mapa = { qr:'vQr', hoje:'vHoje', equipe:'vEquipe',
+                 escalas:'vEscalas', local:'vLocal', fechar:'vFechar' };
+    Object.keys(mapa).forEach(function(k){ el(mapa[k]).hidden = (k !== qual); });
+    if(qual === 'hoje') carregaDia();
+    if(qual === 'equipe' || qual === 'escalas') carregaEquipe();
+  });
+});
+
+/* ---- QR / cartaz ---- */
+function urlDoPonto(){
+  return location.origin + location.pathname + '#t=' + encodeURIComponent(cfgAtual.token || '');
+}
+
+function pintaQr(){
+  var url = urlDoPonto();
+  el('qrUrlBox').className = 'msg info';
+  el('qrUrlBox').textContent = url;
+
+  var svg = '';
+  try{
+    // tipo 0 = escolhe sozinho o menor tamanho que couber; 'M' aguenta
+    // sujeira e amassado no papel sem parar de ler.
+    var qr = qrcode(0, 'M');
+    qr.addData(url);
+    qr.make();
+    svg = qr.createSvgTag({ cellSize: 8, margin: 0, scalable: true });
+  }catch(e){
+    svg = '<div class="erroCaixa">Não deu para desenhar o QR. Verifique a conexão e recarregue.</div>';
+  }
+
+  el('qrArea').innerHTML =
+    '<div class="cartaz">' +
+      '<div class="ctLoja">' + escapaHtml(el('topoLoja').textContent) + '</div>' +
+      '<div class="ctTit">Ponto Eletrônico</div>' +
+      '<div class="ctSub">Aponte a câmera do celular para o código</div>' +
+      '<div class="ctQr">' + svg + '</div>' +
+      '<div class="ctPassos">' +
+        '<div><b>1.</b> Abra a câmera do celular e aponte para o código.</div>' +
+        '<div><b>2.</b> Toque no aviso que aparecer na tela.</div>' +
+        '<div><b>3.</b> Toque no seu nome.</div>' +
+        '<div><b>4.</b> Digite o seu PIN de 4 números.</div>' +
+      '</div>' +
+      '<div class="ctRodape">Registre a entrada, a saída para o almoço, a volta e a saída.<br>' +
+      'Esqueceu de bater? Avise o RH no mesmo dia.</div>' +
+    '</div>';
+}
+
+el('btnImprimir').addEventListener('click', function(){ window.print(); });
+
+el('btnCopiarLink').addEventListener('click', function(){
+  var url = urlDoPonto();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(function(){
+      mostraMsg('qrMsg', 'Link copiado.', 'ok');
+    }, function(){
+      mostraMsg('qrMsg', 'Não deu para copiar. Selecione o link acima na mão.', 'erro');
+    });
+  } else {
+    mostraMsg('qrMsg', 'Selecione o link acima e copie na mão.', 'info');
+  }
+});
+
+el('btnNovoToken').addEventListener('click', function(){
+  if(!confirm('Gerar um código novo invalida o cartaz que já está na parede.\n\n' +
+              'Você vai precisar imprimir e colar o novo. Continuar?')) return;
+  supa.rpc('ponto_admin_token_girar').then(function(res){
+    if(res.error){ mostraMsg('qrMsg', res.error.message, 'erro'); return; }
+    cfgAtual = res.data || {};
+    pintaQr();
+    mostraMsg('qrMsg', 'Código novo gerado. Imprima e troque o cartaz da parede.', 'ok');
+  });
+});
+
+/* ---- configuração ---- */
+function preencheCfg(){
+  el('cfgLat').value = cfgAtual.lat != null ? cfgAtual.lat : '';
+  el('cfgLng').value = cfgAtual.lng != null ? cfgAtual.lng : '';
+  el('cfgRaio').value = cfgAtual.raioM != null ? cfgAtual.raioM : 150;
+  el('cfgJanela').value = cfgAtual.janelaMin != null ? cfgAtual.janelaMin : 3;
+  el('cfgExigirGps').checked = cfgAtual.exigirGps !== false;
+  el('cfgAtivo').checked = cfgAtual.ativo !== false;
+  if(cfgAtual.lat == null){
+    mostraMsg('localMsg',
+      'A localização da empresa ainda não foi capturada — enquanto isso, a batida é aceita ' +
+      'de qualquer lugar. Abra esta página dentro do mercado e toque no botão acima.', 'info');
+  }
+}
+
+el('btnCapturarLocal').addEventListener('click', function(){
+  var b = this;
+  if(!navigator.geolocation){
+    mostraMsg('localMsg', 'Este navegador não informa a localização.', 'erro');
+    return;
+  }
+  b.disabled = true; b.textContent = 'Procurando o sinal...';
+  navigator.geolocation.getCurrentPosition(function(p){
+    b.disabled = false; b.textContent = 'Usar a minha localização de agora';
+    el('cfgLat').value = p.coords.latitude.toFixed(6);
+    el('cfgLng').value = p.coords.longitude.toFixed(6);
+    mostraMsg('localMsg',
+      'Localização capturada (precisão de cerca de ' + Math.round(p.coords.accuracy) +
+      ' m). Confira o raio e toque em Salvar regras.', 'ok');
+  }, function(err){
+    b.disabled = false; b.textContent = 'Usar a minha localização de agora';
+    mostraMsg('localMsg',
+      err.code === 1 ? 'Você precisa permitir o acesso à localização no navegador.'
+                     : 'Não deu para pegar a localização. Tente perto de uma janela.', 'erro');
+  }, { enableHighAccuracy:true, timeout:15000, maximumAge:0 });
+});
+
+el('btnSalvarCfg').addEventListener('click', function(){
+  var lat = parseFloat(el('cfgLat').value);
+  var lng = parseFloat(el('cfgLng').value);
+  var novo = {
+    raioM:     Math.max(30, parseInt(el('cfgRaio').value, 10) || 150),
+    janelaMin: Math.max(0, parseInt(el('cfgJanela').value, 10) || 0),
+    exigirGps: el('cfgExigirGps').checked,
+    ativo:     el('cfgAtivo').checked
+  };
+  novo.lat = isNaN(lat) ? null : lat;
+  novo.lng = isNaN(lng) ? null : lng;
+  if((novo.lat == null) !== (novo.lng == null)){
+    mostraMsg('cfgMsg', 'Informe latitude e longitude juntas, ou deixe as duas em branco.', 'erro');
+    return;
+  }
+  supa.rpc('ponto_admin_cfg_salvar', { p: novo }).then(function(res){
+    if(res.error){ mostraMsg('cfgMsg', res.error.message, 'erro'); return; }
+    cfgAtual = res.data || {};
+    preencheCfg();
+    mostraMsg('cfgMsg', 'Regras salvas.', 'ok');
+  });
+});
+
+/* ---- equipe e PINs ---- */
+function carregaEquipe(){
+  supa.rpc('ponto_admin_equipe').then(function(res){
+    if(res.error){ mostraMsg('equipeMsg', res.error.message, 'erro'); return; }
+    equipe = (res.data && res.data.itens) || [];
+    pintaEquipe();
+    pintaSelEscala();
+  });
+}
+
+function pintaEquipe(){
+  var soltos = equipe.filter(function(c){ return c.ativo && !c.temPin; }).length;
+  var html =
+    '<thead><tr><th>Nome</th><th>Folha</th><th>Bate ponto</th><th>PIN</th><th></th></tr></thead><tbody>';
+  html += equipe.map(function(c){
+    return '<tr>' +
+      '<td><b>' + escapaHtml(c.nome) + '</b><br>' +
+        '<span style="font-size:12px;color:var(--ink-soft)">' + escapaHtml(c.funcao || '') + '</span></td>' +
+      '<td>' + escapaHtml(c.folha || '—') + '</td>' +
+      '<td><label style="display:inline-flex;gap:6px;align-items:center;cursor:pointer;">' +
+        '<input type="checkbox" class="chkAtivo" data-id="' + escapaHtml(c.id) + '"' +
+        (c.ativo ? ' checked' : '') + ' style="width:17px;height:17px;">' +
+        '<span class="chip ' + (c.ativo ? 'ok' : 'nao') + '">' + (c.ativo ? 'liberado' : 'fora') + '</span>' +
+      '</label></td>' +
+      '<td>' + (c.temPin
+        ? '<span class="chip ok">cadastrado</span>'
+        : '<span class="chip ' + (c.ativo ? 'ruim' : 'nao') + '">falta</span>') + '</td>' +
+      '<td style="text-align:right;white-space:nowrap;">' +
+        '<button class="btn fantasma pequeno btnPin" data-id="' + escapaHtml(c.id) + '" ' +
+                'data-nome="' + escapaHtml(c.nome) + '">' +
+          (c.temPin ? 'Trocar PIN' : 'Definir PIN') + '</button>' +
+      '</td></tr>';
+  }).join('');
+  html += '</tbody>';
+  el('tabEquipe').innerHTML = html;
+
+  if(soltos){
+    mostraMsg('equipeMsg', soltos + ' colaborador(es) liberado(s) ainda sem PIN — ' +
+      'eles não conseguem bater o ponto até você definir um.', 'erro');
+  } else {
+    mostraMsg('equipeMsg', '');
+  }
+}
+
+el('tabEquipe').addEventListener('change', function(ev){
+  var c = ev.target.closest('.chkAtivo');
+  if(!c) return;
+  supa.rpc('ponto_admin_escala', {
+    p_func: c.getAttribute('data-id'),
+    p_ativo: c.checked,
+    p_jornada: null,
+    p_folha: null
+  }).then(function(res){
+    if(res.error){ mostraMsg('equipeMsg', res.error.message, 'erro'); return; }
+    carregaEquipe();
+  });
+});
+
+el('tabEquipe').addEventListener('click', function(ev){
+  var b = ev.target.closest('.btnPin');
+  if(!b) return;
+  var nome = b.getAttribute('data-nome');
+  var novo = prompt('PIN de 4 números para ' + nome + ':\n\n' +
+                    '(deixe em branco e confirme para apagar o PIN)');
+  if(novo === null) return;
+  novo = novo.trim();
+  if(novo && !/^\d{4}$/.test(novo)){
+    mostraMsg('equipeMsg', 'O PIN precisa ter exatamente 4 números.', 'erro');
+    return;
+  }
+  supa.rpc('ponto_admin_pin', { p_func: b.getAttribute('data-id'), p_pin: novo })
+    .then(function(res){
+      if(res.error){ mostraMsg('equipeMsg', res.error.message, 'erro'); return; }
+      if(res.data && res.data.ok === false){
+        mostraMsg('equipeMsg', res.data.msg, 'erro'); return;
+      }
+      mostraMsg('equipeMsg',
+        novo ? 'PIN de ' + nome + ' salvo. Avise a pessoa.' : 'PIN de ' + nome + ' apagado.', 'ok');
+      carregaEquipe();
+    });
+});
+
+/* ---- escalas ---- */
+function pintaSelEscala(){
+  var atual = el('selEscala').value;
+  el('selEscala').innerHTML = equipe.map(function(c){
+    return '<option value="' + escapaHtml(c.id) + '">' + escapaHtml(c.nome) +
+           (c.ativo ? '' : ' (fora do ponto)') + '</option>';
+  }).join('');
+  if(atual) el('selEscala').value = atual;
+  pintaEscala();
+}
+
+el('selEscala').addEventListener('change', pintaEscala);
+
+function pintaEscala(){
+  var id = el('selEscala').value;
+  escalaEdit = equipe.filter(function(c){ return c.id === id; })[0];
+  if(!escalaEdit){ el('tabEscala').innerHTML = ''; return; }
+  var j = escalaEdit.jornada || {};
+  var html = '<thead><tr><th>Dia</th><th>Ent. 1</th><th>Saí. 1</th><th>Ent. 2</th>' +
+             '<th>Saí. 2</th><th>Ent. 3</th><th>Saí. 3</th></tr></thead><tbody>';
+  ['seg','ter','qua','qui','sex','sab','dom'].forEach(function(d){
+    var v = j[d] || [null,null,null,null,null,null];
+    html += '<tr><td style="white-space:nowrap;font-weight:600;">' + DIAS_NOME[d] + '</td>';
+    for(var i = 0; i < 6; i++){
+      html += '<td><input type="time" data-dia="' + d + '" data-i="' + i + '" value="' +
+              (v[i] != null ? hhmm(v[i]) : '') + '"></td>';
+    }
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  el('tabEscala').innerHTML = html;
+  mostraMsg('escalaMsg', '');
+}
+
+function aplicaModelo(saidaFinal, domingo){
+  var inputs = el('tabEscala').querySelectorAll('input[type=time]');
+  Array.prototype.forEach.call(inputs, function(inp){
+    var d = inp.getAttribute('data-dia'), i = +inp.getAttribute('data-i');
+    if(d === 'dom'){
+      inp.value = domingo ? (['07:30','13:00','','','',''][i] || '') : '';
+    } else {
+      inp.value = (['07:30','12:00','13:30',saidaFinal,'',''][i] || '');
+    }
+  });
+}
+el('btnEscalaA').addEventListener('click', function(){ aplicaModelo('18:00', false); });
+el('btnEscalaB').addEventListener('click', function(){ aplicaModelo('18:30', true); });
+el('btnEscalaLimpar').addEventListener('click', function(){
+  Array.prototype.forEach.call(el('tabEscala').querySelectorAll('input[type=time]'),
+    function(inp){ inp.value = ''; });
+});
+
+el('btnSalvarEscala').addEventListener('click', function(){
+  if(!escalaEdit) return;
+  var jornada = {};
+  DIAS_SEM.forEach(function(d){ jornada[d] = [null,null,null,null,null,null]; });
+  var ruim = false;
+  Array.prototype.forEach.call(el('tabEscala').querySelectorAll('input[type=time]'), function(inp){
+    var d = inp.getAttribute('data-dia'), i = +inp.getAttribute('data-i');
+    var t = inp.value.trim();
+    if(!t) return;
+    var m = paraMin(t);
+    if(m == null){ ruim = true; return; }
+    jornada[d][i] = m;
+  });
+  if(ruim){ mostraMsg('escalaMsg', 'Tem horário inválido na tabela.', 'erro'); return; }
+
+  supa.rpc('ponto_admin_escala', {
+    p_func: escalaEdit.id, p_ativo: null, p_jornada: jornada, p_folha: null
+  }).then(function(res){
+    if(res.error){ mostraMsg('escalaMsg', res.error.message, 'erro'); return; }
+    mostraMsg('escalaMsg', 'Horário de ' + escalaEdit.nome + ' salvo.', 'ok');
+    carregaEquipe();
+  });
+});
+
+/* ---- batidas do dia ---- */
+el('btnRecarregarDia').addEventListener('click', carregaDia);
+el('hojeData').addEventListener('change', carregaDia);
+
+function carregaDia(){
+  var d = el('hojeData').value;
+  if(!d) return;
+  supa.rpc('ponto_admin_dia', { p_dia: d }).then(function(res){
+    if(res.error){ mostraMsg('hojeMsg', res.error.message, 'erro'); return; }
+    pintaDia(res.data);
+  });
+}
+
+function pintaDia(dados){
+  var itens = (dados && dados.itens) || [];
+  var ativos = itens.filter(function(c){ return c.ativo; });
+  var html = '<thead><tr><th>Nome</th><th>Previsto</th><th>Ent. 1</th><th>Saí. 1</th>' +
+             '<th>Ent. 2</th><th>Saí. 2</th><th>Situação</th></tr></thead><tbody>';
+
+  html += ativos.map(function(c){
+    var prev = c.previsto || [];
+    var temPrev = prev[0] != null;
+    var feitas = {};
+    (c.batidas || []).forEach(function(b){ feitas[b.slot] = b; });
+
+    var cels = '';
+    for(var s = 1; s <= 4; s++){
+      var b = feitas[s];
+      cels += '<td class="horas"><span class="celHora" data-id="' + escapaHtml(c.id) +
+              '" data-slot="' + s + '" data-nome="' + escapaHtml(c.nome) +
+              '" style="cursor:pointer;border-bottom:1px dotted var(--border);">' +
+              (b ? escapaHtml(b.hora) : '<span class="falta">--:--</span>') + '</span>' +
+              (b && b.origem === 'manual' ? ' <span title="lançada na mão">*</span>' : '') +
+              (b && b.foraArea ? ' <span class="chip alerta" title="' + escapaHtml(b.distancia) +
+                ' m da loja">fora</span>' : '') +
+              '</td>';
+    }
+
+    var sit;
+    var qtd = (c.batidas || []).length;
+    if(!temPrev)      sit = '<span class="chip nao">folga</span>';
+    else if(qtd === 0) sit = '<span class="chip ruim">não bateu</span>';
+    else if(qtd < 4)  sit = '<span class="chip alerta">' + qtd + ' de 4</span>';
+    else              sit = '<span class="chip ok">completo</span>';
+
+    return '<tr><td><b>' + escapaHtml(c.nome) + '</b></td>' +
+           '<td style="white-space:nowrap;font-size:12.5px;color:var(--ink-soft)">' +
+             (temPrev ? hhmm(prev[0]) + '–' + hhmm(prev[1]) + ' · ' +
+                        hhmm(prev[2]) + '–' + hhmm(prev[3]) : '—') + '</td>' +
+           cels + '<td>' + sit + '</td></tr>';
+  }).join('');
+  html += '</tbody>';
+  el('tabHoje').innerHTML = html;
+
+  var faltando = ativos.filter(function(c){
+    return (c.previsto || [])[0] != null && (c.batidas || []).length < 4;
+  }).length;
+  if(faltando){
+    mostraMsg('hojeMsg', faltando + ' colaborador(es) com batida faltando neste dia. ' +
+      'Clique no horário em branco para lançar na mão.', 'info');
+  } else {
+    mostraMsg('hojeMsg', '');
+  }
+}
+
+el('tabHoje').addEventListener('click', function(ev){
+  var c = ev.target.closest('.celHora');
+  if(!c) return;
+  var atual = c.textContent.trim();
+  if(atual === '--:--') atual = '';
+  var nome = c.getAttribute('data-nome');
+  var slot = +c.getAttribute('data-slot');
+  var rot = ['Entrada','Saída para o almoço','Volta do almoço','Saída'][slot-1];
+  var novo = prompt(rot + ' de ' + nome + ' em ' + el('hojeData').value + '\n\n' +
+                    'Digite o horário (HH:MM). Deixe em branco para apagar.', atual);
+  if(novo === null) return;
+  novo = novo.trim();
+
+  if(!novo){
+    // Apagar = anular a batida. Recarregamos o dia so para pegar o id
+    // dela, ja que a celula guarda apenas o horario.
+    supa.rpc('ponto_admin_dia', { p_dia: el('hojeData').value }).then(function(res){
+      var item = ((res.data && res.data.itens) || []).filter(function(x){
+        return x.id === c.getAttribute('data-id');
+      })[0];
+      var alvo = item && (item.batidas || []).filter(function(x){ return x.slot === slot; })[0];
+      if(!alvo){ return; }
+      supa.rpc('ponto_admin_batida_anular', { p_id: alvo.id, p_por: el('adQuem').textContent })
+        .then(function(){ carregaDia(); mostraMsg('hojeMsg', 'Batida apagada.', 'ok'); });
+    });
+    return;
+  }
+
+  if(paraMin(novo) == null){
+    mostraMsg('hojeMsg', 'Horário inválido. Use HH:MM, por exemplo 07:30.', 'erro');
+    return;
+  }
+  supa.rpc('ponto_admin_batida_manual', {
+    p_func: c.getAttribute('data-id'),
+    p_dia:  el('hojeData').value,
+    p_slot: slot,
+    p_hora: novo,
+    p_obs:  'lançada pelo RH',
+    p_por:  el('adQuem').textContent
+  }).then(function(res){
+    if(res.error){ mostraMsg('hojeMsg', res.error.message, 'erro'); return; }
+    if(res.data && res.data.ok === false){ mostraMsg('hojeMsg', res.data.msg, 'erro'); return; }
+    carregaDia();
+    mostraMsg('hojeMsg', 'Horário lançado.', 'ok');
+  });
+});
+
+/* ---- fechar o mês ---- */
+el('btnConsolidar').addEventListener('click', function(){
+  var mes = el('fecharMes').value;
+  if(!mes){ mostraMsg('fecharMsg', 'Escolha o mês.', 'erro'); return; }
+  rodaSync(mes, false);
+});
+
+function rodaSync(mes, forcar){
+  var b = el('btnConsolidar');
+  b.disabled = true; b.textContent = 'Consolidando...';
+  supa.rpc('ponto_qr_sync', { p_mes: mes, p_forcar: forcar }).then(function(res){
+    b.disabled = false; b.textContent = 'Consolidar';
+    if(res.error){ mostraMsg('fecharMsg', res.error.message, 'erro'); return; }
+    var d = res.data || {};
+    if(!d.ok){
+      if(d.erro === 'ocupado'){
+        if(confirm(d.msg + '\n\nSubstituir pelas batidas do QR?')) rodaSync(mes, true);
+        return;
+      }
+      mostraMsg('fecharMsg', d.msg || 'Não deu certo.', 'erro');
+      return;
+    }
+    mostraMsg('fecharMsg',
+      'Pronto: ' + d.colaboradores + ' colaboradores e ' + d.batidas +
+      ' batidas gravadas no Controle de Ponto de ' + mes +
+      ' (até o dia ' + d.ateDia + '). Confira no sistema de RH.', 'ok');
+  });
+}
+
+/* ====================================================================
+   PARTIDA
+   ==================================================================== */
+TOKEN = leToken();
+
+if(/[?&#]admin\b/.test(location.search + location.hash)){
+  mostraAdmin(true);
+  supa.auth.getSession().then(function(r){ entrou(r.data ? r.data.session : null); });
+} else {
+  mostraAdmin(false);
+  carregaLista();
+}
+
+})();
+</script>
+</body>
+</html>
