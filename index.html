@@ -275,8 +275,12 @@
     color:var(--brand-dark); border-radius:8px; padding:4px 9px; font-weight:700;
   }
   .ptDia .marca small{display:block; font-size:10px; font-weight:600; opacity:.75;}
+  /* a propria marca ja diz se aquela batida gerou extra ou ocorrencia */
+  .ptDia .marca.extra{background:#CBE7D7; color:#07472A; box-shadow:inset 3px 0 0 var(--brand);}
+  .ptDia .marca.ruim{background:var(--aviso-bg); color:#6B4409; box-shadow:inset 3px 0 0 var(--aviso);}
   .ptDia .nota{font-size:12.5px; color:var(--ink-soft); margin-top:7px;}
   .ptDia .nota.atraso{color:var(--aviso); font-weight:600;}
+  .ptDia .nota.extra{color:var(--brand-dark); font-weight:600;}
   .ptVazio{text-align:center; color:var(--ink-soft); font-size:14px; padding:26px 10px;}
 
   /* ======================= ADMIN ======================= */
@@ -695,6 +699,41 @@
           <button class="btn fantasma" id="btnCapturarLocal">Usar a minha localização de agora</button>
           <div class="msg" id="localMsg"></div>
         </div>
+        <div class="cartao">
+          <h3>Faixas de horário</h3>
+          <p class="sub">
+            É o horário da batida que decide se ela é <b>Entrada 1</b>, <b>Saída 1</b>,
+            <b>Entrada 2</b> ou <b>Saída 2</b> — não a ordem em que a pessoa bateu. Quem chega
+            às 15h para o turno da tarde registra Entrada 2, mesmo sendo a primeira batida do dia.
+            Cada horário abaixo é <b>o começo</b> da faixa; tudo que vier antes do primeiro é Entrada 1.
+          </p>
+          <div class="linhaCampos" style="margin-bottom:14px;">
+            <div><label class="campo" for="cfgSai1">Saída 1 a partir de</label>
+                 <input type="time" id="cfgSai1"></div>
+            <div><label class="campo" for="cfgEnt2">Entrada 2 a partir de</label>
+                 <input type="time" id="cfgEnt2"></div>
+            <div><label class="campo" for="cfgSai2">Saída 2 a partir de</label>
+                 <input type="time" id="cfgSai2"></div>
+          </div>
+          <div class="msg info" id="faixasResumo"></div>
+
+          <h3 style="margin-top:22px;">Hora extra, atraso e saída antecipada</h3>
+          <p class="sub">
+            A faixa acima diz <b>qual</b> batida é. Já a comparação com o <b>horário da escala
+            de cada pessoa</b> diz como ela foi: quem entra 06:20 numa escala de 07:30 registra
+            Entrada 1 com <b>1h10 de hora extra</b>; quem sai 18:00 numa escala de 18:30 registra
+            Saída 2 com <b>30 min de saída antecipada</b>; depois das 18:30, hora extra de novo.
+            A tolerância abaixo evita virar ocorrência por causa de dois minutos.
+          </p>
+          <div style="max-width:240px;margin-bottom:16px;">
+            <label class="campo" for="cfgTolerancia">Tolerância (minutos)</label>
+            <input type="number" id="cfgTolerancia" min="0" max="60" step="1">
+          </div>
+
+          <button class="btn" id="btnSalvarFaixas">Salvar faixas e tolerância</button>
+          <div class="msg" id="faixasMsg"></div>
+        </div>
+
         <div class="cartao">
           <h3>Regras</h3>
           <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:16px;">
@@ -1368,25 +1407,50 @@ function bater(){
   });
 }
 
-function mostraResultado(d){
-  var atrasoMin = null;
-  if(d.previstoSlot != null && d.slot === 1){
-    var prev = +d.previstoSlot;
-    var feito = paraMin(d.hora);
-    if(feito != null && !isNaN(prev)) atrasoMin = feito - prev;
+/* "70" vira "1h10", "45" vira "45 min" — quem le a tela nao quer converter
+   minuto em hora de cabeca. */
+function duracao(min){
+  min = Math.max(0, min | 0);
+  var h = Math.floor(min / 60), m = min % 60;
+  if(!h) return m + ' min';
+  return h + 'h' + (m ? (m < 10 ? '0' : '') + m : '');
+}
+
+/* Frase da ocorrencia, a partir da classificacao que veio do servidor. */
+function frasePonto(classe, slot){
+  if(!classe) return null;
+  var min = +classe.minutos || 0;
+  var prev = classe.previsto != null ? hhmm(+classe.previsto) : '';
+  var entrada = (slot % 2) === 1;
+  switch(classe.tipo){
+    case 'extra':
+      return { tom:'ok', texto: duracao(min) + ' de hora extra' +
+               (entrada ? ' — entrou antes do horário (' : ' — saiu depois do horário (') +
+               prev + ').' };
+    case 'atraso':
+      return { tom:'atrasou', texto: duracao(min) + ' de atraso (previsto ' + prev + ').' };
+    case 'antecipada':
+      return { tom:'atrasou', texto: 'Saída antecipada em ' + duracao(min) +
+               ' (previsto ' + prev + ').' };
+    case 'no_horario':
+      return { tom:'ok', texto:'No horário.' };
+    case 'fora_da_escala':
+      return { tom:'', texto:'Fora da escala deste dia — o RH confere.' };
   }
+  return null;
+}
+
+function mostraResultado(d){
+  var f = frasePonto(d.classe, d.slot);
 
   var selo = 'ok', simbolo = '✓';
-  if(atrasoMin != null && atrasoMin > 5){ selo = 'avisa'; simbolo = '!'; }
+  if(f && f.tom === 'atrasou'){ selo = 'avisa'; simbolo = '!'; }
 
   var obs = '';
   if(d.repetida){
     obs = '<div class="obs">Esta batida já estava registrada.</div>';
-  } else if(atrasoMin != null && atrasoMin > 5){
-    obs = '<div class="obs atrasou">' + atrasoMin + ' minutos depois do horário (' +
-          escapaHtml(hhmm(+d.previstoSlot)) + ').</div>';
-  } else if(atrasoMin != null){
-    obs = '<div class="obs ok">No horário.</div>';
+  } else if(f){
+    obs = '<div class="obs ' + f.tom + '">' + escapaHtml(f.texto) + '</div>';
   }
 
   var rotulos = ['Entrada','Saída para o almoço','Volta do almoço','Saída','Entrada extra','Saída extra'];
@@ -1554,8 +1618,12 @@ function pintaPortal(d){
       cartaoPortal('Saldo' + (ate || ' do mês'),
         (saldo > 0 ? '+' : saldo < 0 ? '−' : '') + hhmm(Math.abs(saldo)),
         saldo > 0 ? 'pos' : saldo < 0 ? 'neg' : 'zero') +
-      cartaoPortal('Atrasos somados', hhmm(t.atrasoMin || 0),
+      cartaoPortal('Hora extra', hhmm(t.extraMin || 0),
+        (t.extraMin || 0) > 0 ? 'pos' : 'zero') +
+      cartaoPortal('Atrasos', hhmm(t.atrasoMin || 0),
         (t.atrasoMin || 0) > 0 ? 'neg' : 'zero') +
+      cartaoPortal('Saídas antecipadas', hhmm(t.antecipadaMin || 0),
+        (t.antecipadaMin || 0) > 0 ? 'neg' : 'zero') +
     '</div>';
 
   // Dias anteriores ao primeiro uso nao entram na conta nem na lista: nao
@@ -1574,21 +1642,33 @@ function pintaPortal(d){
     return;
   }
   el('ptDias').innerHTML = dias.map(function(x){
-    if(!x.contado && !x.batidas.length) return '';
-    if(x.folga && !x.batidas.length) return '';
+    // Dia sem batida so aparece quando e falta de verdade: folga, dia
+    // anterior a adesao e o proprio dia de hoje ainda sem batida virariam
+    // cartoes vazios sem dizer nada.
+    if(!x.batidas.length && !x.falta) return '';
     var classe = 'ptDia' + (x.falta ? ' falta' : '') + (x.folga ? ' folga' : '');
     var marcas = x.batidas.map(function(b){
-      return '<span class="marca">' + escapaHtml(b.hora) +
+      var t = (b.classe && b.classe.tipo) || '';
+      var cor = t === 'extra' ? ' extra'
+              : (t === 'atraso' || t === 'antecipada') ? ' ruim' : '';
+      return '<span class="marca' + cor + '">' + escapaHtml(b.hora) +
              '<small>' + escapaHtml(b.rotulo) + '</small></span>';
     }).join('');
-    var nota = '';
+
+    var notas = [];
     if(x.falta){
-      nota = '<div class="nota">Sem batida em dia de trabalho. Fale com o RH se estiver errado.</div>';
-    } else if(x.atrasoMin != null && x.atrasoMin > 5){
-      nota = '<div class="nota atraso">' + x.atrasoMin + ' minutos depois do horário.</div>';
-    } else if(x.batidas.length && x.batidas.length % 2 !== 0){
-      nota = '<div class="nota">Falta a batida de saída deste dia.</div>';
+      notas.push(['', 'Sem batida em dia de trabalho. Fale com o RH se estiver errado.']);
+    } else {
+      if(x.extraMin)      notas.push(['extra',  duracao(x.extraMin) + ' de hora extra.']);
+      if(x.atrasoMin)     notas.push(['atraso', duracao(x.atrasoMin) + ' de atraso.']);
+      if(x.antecipadaMin) notas.push(['atraso', 'Saída antecipada em ' + duracao(x.antecipadaMin) + '.']);
+      if(x.batidas.length && x.batidas.length % 2 !== 0){
+        notas.push(['', 'Falta a batida de saída deste dia.']);
+      }
     }
+    var nota = notas.map(function(n){
+      return '<div class="nota ' + n[0] + '">' + escapaHtml(n[1]) + '</div>';
+    }).join('');
     return '<div class="' + classe + '">' +
              '<div class="cab">' +
                '<span class="data">' + escapaHtml(x.rotulo) + '</span>' +
@@ -1947,12 +2027,84 @@ function preencheCfg(){
   el('cfgJanela').value = cfgAtual.janelaMin != null ? cfgAtual.janelaMin : 3;
   el('cfgExigirGps').checked = cfgAtual.exigirGps !== false;
   el('cfgAtivo').checked = cfgAtual.ativo !== false;
+  preencheFaixas();
   if(cfgAtual.lat == null){
     mostraMsg('localMsg',
       'A localização da empresa ainda não foi capturada — enquanto isso, a batida é aceita ' +
       'de qualquer lugar. Abra esta página dentro do mercado e toque no botão acima.', 'info');
   }
 }
+
+/* ---- faixas de horario ----
+   Quatro janelas, tres limites. O que vier antes do primeiro limite e
+   Entrada 1; entre o 1o e o 2o, Saida 1; e assim por diante. */
+var FAIXAS_PADRAO = { sai1:600, ent2:750, sai2:1020 };
+
+function faixasDaCfg(){
+  var f = cfgAtual.faixas || {};
+  return {
+    sai1: f.sai1 != null ? +f.sai1 : FAIXAS_PADRAO.sai1,
+    ent2: f.ent2 != null ? +f.ent2 : FAIXAS_PADRAO.ent2,
+    sai2: f.sai2 != null ? +f.sai2 : FAIXAS_PADRAO.sai2
+  };
+}
+function preencheFaixas(){
+  var f = faixasDaCfg();
+  el('cfgSai1').value = hhmm(f.sai1);
+  el('cfgEnt2').value = hhmm(f.ent2);
+  el('cfgSai2').value = hhmm(f.sai2);
+  el('cfgTolerancia').value = cfgAtual.toleranciaMin != null ? cfgAtual.toleranciaMin : 5;
+  pintaResumoFaixas(f);
+}
+function pintaResumoFaixas(f){
+  el('faixasResumo').textContent =
+    'Entrada 1: até ' + hhmm(f.sai1 - 1) + '   ·   ' +
+    'Saída 1: ' + hhmm(f.sai1) + ' a ' + hhmm(f.ent2 - 1) + '   ·   ' +
+    'Entrada 2: ' + hhmm(f.ent2) + ' a ' + hhmm(f.sai2 - 1) + '   ·   ' +
+    'Saída 2: a partir de ' + hhmm(f.sai2);
+}
+['cfgSai1','cfgEnt2','cfgSai2'].forEach(function(id){
+  el(id).addEventListener('input', function(){
+    var f = {
+      sai1: paraMin(el('cfgSai1').value),
+      ent2: paraMin(el('cfgEnt2').value),
+      sai2: paraMin(el('cfgSai2').value)
+    };
+    if(f.sai1 != null && f.ent2 != null && f.sai2 != null) pintaResumoFaixas(f);
+  });
+});
+
+el('btnSalvarFaixas').addEventListener('click', function(){
+  var f = {
+    sai1: paraMin(el('cfgSai1').value),
+    ent2: paraMin(el('cfgEnt2').value),
+    sai2: paraMin(el('cfgSai2').value)
+  };
+  if(f.sai1 == null || f.ent2 == null || f.sai2 == null){
+    mostraMsg('faixasMsg', 'Preencha os três horários.', 'erro');
+    return;
+  }
+  // Fora de ordem as faixas se engolem e alguma nunca aconteceria.
+  if(!(f.sai1 < f.ent2 && f.ent2 < f.sai2)){
+    mostraMsg('faixasMsg', 'Os horários precisam estar em ordem crescente: ' +
+      'Saída 1, depois Entrada 2, depois Saída 2.', 'erro');
+    return;
+  }
+  var tol = parseInt(el('cfgTolerancia').value, 10);
+  if(isNaN(tol) || tol < 0 || tol > 60){
+    mostraMsg('faixasMsg', 'A tolerância precisa ser um número de 0 a 60 minutos.', 'erro');
+    return;
+  }
+  supa.rpc('ponto_admin_cfg_salvar', { p: { faixas: f, toleranciaMin: tol } }).then(function(res){
+    if(res.error){ mostraMsg('faixasMsg', res.error.message, 'erro'); return; }
+    cfgAtual = res.data || {};
+    preencheCfg();
+    // A faixa decide o slot na hora da batida e fica gravada; a tolerancia
+    // e a comparacao com a escala sao recalculadas toda vez que a tela abre.
+    mostraMsg('faixasMsg', 'Salvo. A tolerância vale também para os dias já registrados; ' +
+      'as faixas valem para as próximas batidas.', 'ok');
+  });
+});
 
 el('btnCapturarLocal').addEventListener('click', function(){
   var b = this;
@@ -2182,6 +2334,14 @@ function pintaDia(dados){
     var cels = '';
     for(var s = 1; s <= 4; s++){
       var b = feitas[s];
+      // O horario sozinho nao conta a historia: 06:20 na Ent. 1 e hora
+      // extra, 18:00 na Sai. 2 e saida antecipada. O chip diz qual e qual.
+      var t = (b && b.classe && b.classe.tipo) || '';
+      var mins = (b && b.classe && +b.classe.minutos) || 0;
+      var chip = '';
+      if(t === 'extra' && mins)      chip = ' <span class="chip ok" title="hora extra">+' + duracao(mins) + '</span>';
+      else if(t === 'atraso')        chip = ' <span class="chip alerta" title="atraso">atraso ' + duracao(mins) + '</span>';
+      else if(t === 'antecipada')    chip = ' <span class="chip alerta" title="saída antecipada">−' + duracao(mins) + '</span>';
       cels += '<td class="horas"><span class="celHora" data-id="' + escapaHtml(c.id) +
               '" data-slot="' + s + '" data-nome="' + escapaHtml(c.nome) +
               '" style="cursor:pointer;border-bottom:1px dotted var(--border);">' +
@@ -2189,6 +2349,7 @@ function pintaDia(dados){
               (b && b.origem === 'manual' ? ' <span title="lançada na mão">*</span>' : '') +
               (b && b.foraArea ? ' <span class="chip alerta" title="' + escapaHtml(b.distancia) +
                 ' m da loja">fora</span>' : '') +
+              chip +
               '</td>';
     }
 
