@@ -190,8 +190,69 @@
     border-radius:11px; padding:12px 14px; font-size:14px; margin:14px 0;
   }
   .contador{font-size:12.5px; color:var(--ink-soft); margin-top:14px;}
-  .rodape{text-align:center; padding:26px 16px 32px;}
+  .rodape{text-align:center; padding:26px 16px 32px; display:flex; gap:22px;
+          justify-content:center; align-items:center; flex-wrap:wrap;}
   .rodape a{color:var(--ink-soft); font-size:12px; text-decoration:none; opacity:.55; cursor:pointer;}
+  /* A porta do colaborador precisa ser achada; a do RH, nao. */
+  .rodape a.destaque{
+    font-size:14px; opacity:1; color:var(--brand-dark); font-weight:700;
+    text-decoration:underline; text-underline-offset:3px;
+  }
+
+  /* ======================= PORTAL DO COLABORADOR ======================= */
+  .ptTopo{
+    background:var(--brand-dark); color:#fff; padding:16px 16px 18px;
+    display:flex; align-items:center; gap:13px;
+  }
+  .ptTopo .ini{
+    flex:0 0 44px; height:44px; border-radius:50%; background:rgba(255,255,255,.16);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px;
+  }
+  .ptTopo .n{font-weight:800; font-size:17px; line-height:1.2;}
+  .ptTopo .f{font-size:12.5px; opacity:.8;}
+  .ptTopo .sair{
+    margin-left:auto; color:#fff; font-size:13px; cursor:pointer;
+    background:rgba(255,255,255,.14); border:0; border-radius:9px;
+    min-height:38px; padding:0 14px; font-weight:600; font-family:inherit;
+  }
+  .ptMes{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .ptMes button{
+    min-height:40px; width:40px; border:1px solid var(--border); background:var(--panel);
+    border-radius:10px; font-size:19px; cursor:pointer; color:var(--ink); font-family:inherit;
+  }
+  .ptMes button[disabled]{opacity:.35; cursor:default;}
+  .ptMes .qual{flex:1; text-align:center; font-weight:700; font-size:16px;}
+
+  .ptCartoes{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:18px;}
+  .ptCartao{
+    background:var(--panel); border:1px solid var(--border-suave); border-radius:12px;
+    padding:12px 13px; box-shadow:var(--shadow-sm);
+  }
+  .ptCartao .rot{font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft);}
+  .ptCartao .val{font-size:21px; font-weight:800; margin-top:3px; font-variant-numeric:tabular-nums;}
+  .ptCartao .val.pos{color:var(--brand);}
+  .ptCartao .val.neg{color:var(--danger);}
+  .ptCartao .val.zero{color:var(--ink);}
+
+  .ptDia{
+    background:var(--panel); border:1px solid var(--border-suave); border-radius:12px;
+    padding:11px 13px; margin-bottom:8px; box-shadow:var(--shadow-sm);
+  }
+  .ptDia.folga{background:transparent; box-shadow:none; border-style:dashed;}
+  .ptDia.falta{border-color:var(--danger); background:var(--danger-bg);}
+  .ptDia .cab{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+  .ptDia .data{font-weight:700; font-size:15px;}
+  .ptDia .sem{font-size:12.5px; color:var(--ink-soft); text-transform:capitalize;}
+  .ptDia .tot{margin-left:auto; font-size:13px; font-weight:700; font-variant-numeric:tabular-nums;}
+  .ptDia .marcas{display:flex; gap:7px; flex-wrap:wrap; margin-top:8px;}
+  .ptDia .marca{
+    font-size:13px; font-variant-numeric:tabular-nums; background:var(--brand-soft);
+    color:var(--brand-dark); border-radius:8px; padding:4px 9px; font-weight:700;
+  }
+  .ptDia .marca small{display:block; font-size:10px; font-weight:600; opacity:.75;}
+  .ptDia .nota{font-size:12.5px; color:var(--ink-soft); margin-top:7px;}
+  .ptDia .nota.atraso{color:var(--aviso); font-weight:600;}
+  .ptVazio{text-align:center; color:var(--ink-soft); font-size:14px; padding:26px 10px;}
 
   /* ======================= ADMIN ======================= */
   .adTopo{
@@ -249,6 +310,26 @@
   .escalaTab input[type=time]{min-height:36px; font-size:13px; padding:0 6px;}
   .escalaTab td{padding:5px 4px;}
 
+  /* ---- Escolha do endereco do QR ---- */
+  #qrEnd{border:1px solid var(--border); border-radius:10px; margin:0 0 14px; background:#fff;}
+  #qrEnd summary{
+    cursor:pointer; padding:11px 14px; font-size:13.5px; font-weight:700; color:var(--ink-soft);
+    list-style:none; user-select:none;
+  }
+  #qrEnd summary::-webkit-details-marker{display:none;}
+  #qrEnd summary::before{content:'▸ '; }
+  #qrEnd[open] summary::before{content:'▾ '; }
+  #qrEnd .qrEndCorpo{padding:0 14px 14px;}
+  #qrSugestoes{margin-bottom:12px;}
+  #qrSugestoes .sugTit{font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:0 0 6px;}
+  button.sugere{
+    display:block; width:100%; text-align:left; margin:0 0 6px; cursor:pointer;
+    padding:9px 12px; font-family:inherit; font-size:14px; color:var(--ink);
+    border:1px solid var(--border); border-radius:9px; background:#fff;
+  }
+  button.sugere:hover{border-color:var(--brand); background:var(--brand-soft);}
+  button.sugere small{display:block; font-size:12px; color:var(--ink-soft); margin-top:2px;}
+
   /* ---- Cartaz do QR ---- */
   #qrArea{text-align:center;}
   .cartaz{
@@ -299,6 +380,9 @@
              placeholder="Buscar meu nome..." aria-label="Buscar meu nome">
       <div class="nomes" id="listaNomes"></div>
       <div id="avisoLista"></div>
+      <div id="voltarBater" hidden style="margin-top:16px;text-align:center;">
+        <button class="btn fantasma pequeno" id="btnVoltarBater">Voltar para bater o ponto</button>
+      </div>
     </section>
 
     <!-- passo 2: PIN -->
@@ -310,7 +394,7 @@
           <div class="f" id="pinFuncao"></div>
         </div>
       </div>
-      <p class="dica">Digite seu PIN de 4 números para registrar o ponto.</p>
+      <p class="dica" id="dicaPin">Digite seu PIN de 4 números para registrar o ponto.</p>
       <div class="pontos" id="pinPontos"><i></i><i></i><i></i><i></i></div>
       <div class="msgPin neutra" id="pinMsg">&nbsp;</div>
       <div class="teclas" id="teclado"></div>
@@ -323,13 +407,42 @@
     <section id="passoOk" hidden>
       <div class="resultado" id="areaResultado"></div>
       <button class="btn bloco" id="btnConcluir">Pronto</button>
+      <!-- A pessoa acabou de provar quem e com o PIN: da para abrir o mes
+           dela aqui mesmo, sem digitar tudo de novo. -->
+      <button class="btn fantasma bloco" id="btnVerMeus" style="margin-top:10px;">Ver meus registros</button>
       <div class="contador" id="contadorVolta"></div>
     </section>
   </main>
 
   <div class="rodape naoImprimir">
-    <a id="linkAdmin">Administração</a>
+    <a id="linkMeus" class="destaque">Ver meus registros</a>
+    <a id="linkAdmin">Acesso do RH</a>
   </div>
+</div>
+
+<!-- ==================== PORTAL DO COLABORADOR ====================
+     O mes da propria pessoa. Chega-se aqui pelo mesmo nome + PIN da
+     batida: nao ha login separado para decorar, e ninguem abre o mes
+     de outro sem saber o PIN do outro. -->
+<div id="telaPortal" hidden>
+  <div class="ptTopo">
+    <div class="ini" id="ptIni"></div>
+    <div>
+      <div class="n" id="ptNome"></div>
+      <div class="f" id="ptFuncao"></div>
+    </div>
+    <button class="sair" id="btnSairPortal">Sair</button>
+  </div>
+  <main>
+    <div class="ptMes">
+      <button id="ptAnterior" aria-label="Mês anterior">‹</button>
+      <div class="qual" id="ptQualMes"></div>
+      <button id="ptProximo" aria-label="Mês seguinte">›</button>
+    </div>
+    <div id="ptResumo"></div>
+    <div class="msg" id="ptMsg"></div>
+    <div id="ptDias"></div>
+  </main>
 </div>
 
 <!-- ==================== TELA DE ADMINISTRAÇÃO ==================== -->
@@ -344,17 +457,28 @@
     <main>
       <div class="cartao">
         <h3>Entrar</h3>
-        <p class="sub">Use o mesmo e-mail e senha do sistema. É preciso ter acesso ao módulo de RH.</p>
-        <div style="margin-bottom:12px;">
-          <label class="campo" for="adEmail">E-mail</label>
-          <input type="email" id="adEmail" autocomplete="username" inputmode="email">
-        </div>
-        <div style="margin-bottom:16px;">
-          <label class="campo" for="adSenha">Senha</label>
-          <input type="password" id="adSenha" autocomplete="current-password">
-        </div>
-        <div class="msg" id="adLoginMsg"></div>
-        <button class="btn bloco" id="btnEntrar">Entrar</button>
+        <p class="sub">
+          Use o mesmo e-mail e senha do sistema de estoque — o e-mail <b>interno</b>,
+          terminado em <b>@rh.local</b>, e não o seu e-mail pessoal. É preciso ter
+          acesso ao módulo de RH.
+        </p>
+        <!-- Um <form> de verdade, com botao submit: e assim que o gerenciador
+             de senhas do navegador entrega o que preencheu. Com os campos
+             soltos e um botao de clique, o Chrome mostrava a senha na tela
+             mas o script lia o campo vazio. -->
+        <form id="adForm" autocomplete="on">
+          <div style="margin-bottom:12px;">
+            <label class="campo" for="adEmail">E-mail</label>
+            <input type="email" id="adEmail" name="username" autocomplete="username"
+                   inputmode="email" placeholder="nome.sobrenome@rh.local">
+          </div>
+          <div style="margin-bottom:16px;">
+            <label class="campo" for="adSenha">Senha</label>
+            <input type="password" id="adSenha" name="password" autocomplete="current-password">
+          </div>
+          <div class="msg" id="adLoginMsg"></div>
+          <button class="btn bloco" id="btnEntrar" type="submit">Entrar</button>
+        </form>
         <div style="margin-top:14px; text-align:center;">
           <a style="font-size:13px;color:var(--ink-soft);cursor:pointer;" id="linkVoltarBatida">Voltar para a tela de ponto</a>
         </div>
@@ -389,6 +513,26 @@
             for parar em mãos erradas, basta gerar um código novo e reimprimir.
           </p>
           <div class="msg info" id="qrUrlBox"></div>
+
+          <!-- Escolha do endereco: o QR so vale se o celular do colaborador
+               alcancar este endereco. Fica aqui, e nao escondido no codigo,
+               porque a pagina pode estar rodando neste computador (rede da
+               loja) ou publicada na internet. -->
+          <details id="qrEnd">
+            <summary>Endereço para onde o QR aponta</summary>
+            <div class="qrEndCorpo">
+              <div id="qrSugestoes"></div>
+              <label class="campo" for="qrEndCampo">Endereço desta página</label>
+              <input type="text" id="qrEndCampo" autocomplete="off" spellcheck="false"
+                     placeholder="http://192.168.0.10:8901  ou  https://suaconta.github.io/ponto/">
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+                <button class="btn" id="btnUsarEnd">Usar este endereço</button>
+                <button class="btn fantasma" id="btnLimparEnd">Voltar ao automático</button>
+              </div>
+              <div class="msg" id="qrEndMsg"></div>
+            </div>
+          </details>
+
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <button class="btn" id="btnImprimir">Imprimir o cartaz</button>
             <button class="btn fantasma" id="btnCopiarLink">Copiar o link</button>
@@ -430,8 +574,14 @@
             Só quem está <b>liberado</b> e tem <b>PIN</b> aparece na tela do QR. O PIN tem 4 números
             e é pessoal — depois de salvo ele não pode mais ser lido, apenas trocado.
           </p>
-          <div class="rolagem"><table class="tab" id="tabEquipe"></table></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+            <button class="btn" id="btnGerarPins">Sortear os PINs que faltam</button>
+          </div>
           <div class="msg" id="equipeMsg"></div>
+          <!-- A lista sai uma vez so, na tela, para o RH imprimir e entregar.
+               Depois disso o PIN vira hash e nao ha como ler de novo. -->
+          <div id="listaPins"></div>
+          <div class="rolagem"><table class="tab" id="tabEquipe"></table></div>
         </div>
       </div>
 
@@ -537,11 +687,54 @@
 var SUPABASE_URL = "https://vieafcgghboxwhultile.supabase.co";
 var SUPABASE_KEY = "sb_publishable_HaMcgvr_2xmWYotvzetmVA_yscPz2eT";
 
+var el = function(id){ return document.getElementById(id); };
+
+/* A biblioteca vem de um CDN. Se a internet cair na hora de carregar a
+   pagina, ela nao chega e o resto do arquivo quebraria calado, deixando
+   uma tela morta na parede. Melhor dizer o que aconteceu. */
+if(!window.supabase || typeof window.supabase.createClient !== 'function'){
+  el('buscaNome').style.display = 'none';
+  el('dicaNome').style.display = 'none';
+  document.querySelector('#passoNome h2.titulo').textContent = 'Não deu para abrir';
+  el('avisoLista').innerHTML =
+    '<div class="erroCaixa"><b>A página não terminou de carregar.</b><br>' +
+    'Normalmente é a internet. Confira a conexão do aparelho e recarregue a página.</div>';
+  return;
+}
+
+/* Guarda a sessao do MESMO jeito e na MESMA chave que o sistema de estoque.
+   Antes daqui saia um storageKey proprio ('ponto_qr_auth'): mesmo projeto,
+   mesma chave publicavel, mas sessao separada — quem ja tinha entrado na
+   Gestao Administrativa era obrigado a digitar a senha outra vez so para
+   abrir este modulo. Com a chave igual, entrar la vale aqui.
+   O envelope try/catch e porque alguns navegadores bloqueiam o localStorage
+   (aba anonima, modo quiosque): sem ele o createClient estoura e a pagina
+   inteira nao abre. Sem localStorage a sessao vive so enquanto a aba estiver
+   aberta, que para a tela de parede e mais que suficiente. */
+var memoria = {};
+var temLS = (function(){
+  try{ window.localStorage.setItem('__t','1'); window.localStorage.removeItem('__t'); return true; }
+  catch(e){ return false; }
+})();
+var guarda = {
+  getItem: function(k){
+    try{ return temLS ? window.localStorage.getItem(k) : (k in memoria ? memoria[k] : null); }
+    catch(e){ return null; }
+  },
+  setItem: function(k, v){
+    try{ if(temLS){ window.localStorage.setItem(k, v); } else { memoria[k] = String(v); } }
+    catch(e){ memoria[k] = String(v); }
+  },
+  removeItem: function(k){
+    try{ if(temLS){ window.localStorage.removeItem(k); } else { delete memoria[k]; } }
+    catch(e){ delete memoria[k]; }
+  }
+};
+
 var supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'ponto_qr_auth' }
+  auth: { storage: guarda, persistSession: true, autoRefreshToken: true }
 });
 
-var el = function(id){ return document.getElementById(id); };
 var DIAS_SEM = ['dom','seg','ter','qua','qui','sex','sab'];
 var DIAS_NOME = {dom:'Domingo', seg:'Segunda', ter:'Terça', qua:'Quarta',
                  qui:'Quinta', sex:'Sexta', sab:'Sábado'};
@@ -552,12 +745,24 @@ function escapaHtml(s){
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function semAcento(s){
-  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  // U+0300..U+036F = os acentos que o NFD separa da letra. Escrito com
+  // escape para nao depender de o arquivo chegar como UTF-8.
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 }
 function iniciais(nome){
-  var p = String(nome || '').trim().split(/\s+/).filter(function(x){ return x.length > 2; });
+  var todas = String(nome || '').trim().split(/\s+/).filter(function(x){ return x; });
+  // "da", "de", "dos" nao viram inicial — mas se o nome so tiver palavras
+  // curtas ("Ana Lu"), usamos as proprias em vez de devolver "?".
+  var p = todas.filter(function(x){ return x.length > 2; });
+  if(!p.length) p = todas;
   if(!p.length) return '?';
   return (p[0][0] + (p.length > 1 ? p[p.length-1][0] : '')).toUpperCase();
+}
+/* Data de hoje no fuso do aparelho. toISOString() devolve UTC: das 21h em
+   diante ele ja virou o dia, e a tela abria no dia seguinte. */
+function isoLocal(d){
+  var m = d.getMonth() + 1, dia = d.getDate();
+  return d.getFullYear() + '-' + (m<10?'0':'') + m + '-' + (dia<10?'0':'') + dia;
 }
 function hhmm(min){
   if(min == null) return '';
@@ -618,10 +823,15 @@ pintaRelogio();
 var TOKEN = '';
 var listaColabs = [];
 var exigeGps = false;
+var temLocal = false;
 var escolhido = null;
 var pin = '';
 var ocupado = false;
 var timerVolta = null;
+/* 'bater' = fluxo normal do QR; 'portal' = a pessoa veio ver o proprio mes.
+   A escolha do nome e o teclado do PIN sao os mesmos nos dois; so muda o
+   que acontece quando o quarto numero entra. */
+var modo = 'bater';
 
 function leToken(){
   var h = location.hash || '';
@@ -640,15 +850,49 @@ function passo(qual){
 
 function carregaLista(){
   if(!TOKEN){
+    // Sem codigo na URL nao da para saber de qual empresa e a lista. Em vez
+    // de deixar a tela vazia, explicamos e abrimos a porta da administracao,
+    // que e por onde se pega o QR e o link.
     el('listaNomes').innerHTML = '';
-    el('avisoLista').innerHTML =
-      '<div class="erroCaixa">Este endereço está incompleto. Use o QR Code colado na parede.</div>';
+    el('buscaNome').style.display = 'none';
+    el('dicaNome').style.display = 'none';
+    // Sem lista nao ha registro para abrir: a porta do colaborador some.
+    el('linkMeus').hidden = true;
+    document.querySelector('#passoNome h2.titulo').textContent = 'Falta o código do QR';
+
+    var local = (location.protocol === 'file:')
+      ? '<div class="erroCaixa"><b>Esta página está sendo aberta como arquivo do computador.</b><br>' +
+        'Assim ela não funciona: publique a pasta na internet (GitHub Pages) e abra pelo endereço ' +
+        'https://... Pelo arquivo, o celular não consegue nem se conectar, nem informar a localização.</div>'
+      : '';
+
+    el('avisoLista').innerHTML = local +
+      '<div class="aviso">Esta tela é a que o colaborador vê <b>depois de ler o QR Code</b>. ' +
+      'O QR carrega um código secreto, e é ele que libera a lista de nomes — por isso, aberta ' +
+      'direto pelo endereço, ela não mostra ninguém.<br><br>' +
+      'É a primeira vez? Entre na administração para cadastrar os PINs e imprimir o cartaz.</div>' +
+      '<button class="btn bloco" id="btnIrAdmin" style="margin-top:6px;">Entrar na administração</button>';
+
+    el('btnIrAdmin').addEventListener('click', function(){
+      mostraAdmin(true);
+      supa.auth.getSession().then(function(r){ entrou(r.data ? r.data.session : null); });
+    });
     return;
   }
   supa.rpc('ponto_qr_lista', { p_token: TOKEN }).then(function(res){
     var d = res.data;
-    if(res.error || !d || !d.ok){
-      var motivo = d && d.erro === 'desativado'
+    // Rede fora e QR vencido sao coisas diferentes: mandar o colaborador
+    // ao RH por causa de um wi-fi caido so gera confusao.
+    if(res.error || !d){
+      el('avisoLista').innerHTML =
+        '<div class="erroCaixa"><b>Sem conexão com o sistema.</b><br>' +
+        'Confira a internet do aparelho e toque em recarregar.</div>' +
+        '<button class="btn bloco" id="btnRecarregar" style="margin-top:6px;">Tentar de novo</button>';
+      el('btnRecarregar').addEventListener('click', function(){ location.reload(); });
+      return;
+    }
+    if(!d.ok){
+      var motivo = d.erro === 'desativado'
         ? 'O ponto por QR está desligado no momento. Procure o RH.'
         : 'Este QR não está mais valendo. Procure o RH para pegar o novo.';
       el('avisoLista').innerHTML = '<div class="erroCaixa">' + motivo + '</div>';
@@ -658,6 +902,7 @@ function carregaLista(){
     pintaRelogio();
     if(d.empresa) el('topoLoja').textContent = d.empresa;
     exigeGps = !!d.exigirGps;
+    temLocal = !!d.temLocal;
     listaColabs = d.colaboradores || [];
     el('avisoLista').innerHTML = '';
     pintaNomes();
@@ -665,6 +910,13 @@ function carregaLista(){
 }
 
 function pintaNomes(){
+  if(!listaColabs.length){
+    // Lista vazia nao e busca sem resultado: e ninguem cadastrado ainda.
+    el('listaNomes').innerHTML =
+      '<div class="aviso">Ainda não há ninguém com PIN cadastrado. ' +
+      'Procure o RH para receber o seu.</div>';
+    return;
+  }
   var busca = semAcento(el('buscaNome').value.trim());
   var itens = listaColabs.filter(function(c){
     return !busca || semAcento(c.nome).indexOf(busca) >= 0;
@@ -740,7 +992,7 @@ el('teclado').addEventListener('click', function(ev){
   if(pin.length >= 4) return;
   pin += t;
   pintaPontos();
-  if(pin.length === 4) setTimeout(bater, 140);
+  if(pin.length === 4) setTimeout(modo === 'portal' ? abrePortal : bater, 140);
 });
 
 el('btnVoltarNome').addEventListener('click', function(){
@@ -752,14 +1004,16 @@ el('btnVoltarNome').addEventListener('click', function(){
 
 /* ---- pega a localização, mas nunca trava a tela esperando ---- */
 function pegaLocal(callback){
-  if(!navigator.geolocation || !exigeGps){
-    if(!navigator.geolocation) return callback(null);
-    // mesmo sem exigir, tenta rápido para gravar a distância
-  }
+  // Enquanto o RH nao capturar o endereco da loja nao ha com o que comparar:
+  // pedir GPS so serviria para o celular perguntar da permissao e a batida
+  // esperar por nada. Com o local cadastrado, tentamos sempre — mesmo quando
+  // nao e obrigatorio — para gravar a distancia no relatorio do dia.
+  if(!navigator.geolocation || !temLocal) return callback(null);
+
   var respondeu = false;
   var prazo = setTimeout(function(){
     if(!respondeu){ respondeu = true; callback(null); }
-  }, 12000);
+  }, exigeGps ? 12000 : 6000);
 
   navigator.geolocation.getCurrentPosition(
     function(p){
@@ -779,13 +1033,17 @@ function pegaLocal(callback){
 function bater(){
   if(ocupado || !escolhido) return;
   ocupado = true;
+  // Enquanto o GPS responde da para tocar em "nao sou eu": guardamos de quem
+  // era a batida para nao jogar o resultado dela na cara de outra pessoa.
+  var deQuem = escolhido;
   el('pinMsg').className = 'msgPin neutra';
-  el('pinMsg').textContent = exigeGps ? 'Conferindo a sua localização...' : 'Registrando...';
+  el('pinMsg').textContent = (exigeGps && temLocal)
+    ? 'Conferindo a sua localização...' : 'Registrando...';
 
   pegaLocal(function(loc){
     supa.rpc('ponto_qr_bater', {
       p_token: TOKEN,
-      p_func:  escolhido.id,
+      p_func:  deQuem.id,
       p_pin:   pin,
       p_lat:   loc ? loc.lat : null,
       p_lng:   loc ? loc.lng : null,
@@ -793,6 +1051,7 @@ function bater(){
       p_disp:  navigator.userAgent
     }).then(function(res){
       ocupado = false;
+      if(escolhido !== deQuem) return;   // desistiu no meio do caminho
       var d = res.data;
       if(res.error || !d){
         el('pinMsg').className = 'msgPin';
@@ -834,8 +1093,14 @@ function mostraResultado(d){
 
   var rotulos = ['Entrada','Saída para o almoço','Volta do almoço','Saída','Entrada extra','Saída extra'];
   var feitas = {};
-  (d.batidas || []).forEach(function(b){ feitas[b.slot] = b.hora; });
-  var quantas = Math.max(4, (d.batidas || []).length);
+  var quantas = 4;
+  (d.batidas || []).forEach(function(b){
+    feitas[b.slot] = b.hora;
+    // pelo maior slot, nao pela quantidade: quem tem so a 1 e a 6 (o RH
+    // lancou na mao) tem duas batidas, mas seis linhas para mostrar.
+    if(b.slot > quantas) quantas = b.slot;
+  });
+  if(quantas > 6) quantas = 6;
   var linhas = '';
   for(var s = 1; s <= quantas; s++){
     var h = feitas[s];
@@ -866,13 +1131,202 @@ function mostraResultado(d){
 
 function voltaInicio(){
   if(timerVolta){ clearInterval(timerVolta); timerVolta = null; }
-  escolhido = null; pin = '';
+  escolhido = null; pin = ''; modo = 'bater';
   el('buscaNome').value = '';
   pintaNomes();
+  ajustaModo();
   passo('nome');
 }
 
 el('btnConcluir').addEventListener('click', voltaInicio);
+
+/* ====================================================================
+   PORTAL DO COLABORADOR
+   Entra-se com o mesmo nome + PIN da batida: nada de mais um login para
+   decorar. E como o servidor so devolve o mes de quem acertou o PIN,
+   nao existe aqui um "id de outra pessoa" para tentar espiar.
+   ==================================================================== */
+var portalFunc = null;
+var portalPin  = '';
+var portalMes  = '';
+
+function ajustaModo(){
+  var noPortal = (modo === 'portal');
+  document.querySelector('#passoNome h2.titulo').textContent =
+    noPortal ? 'Toque no seu nome para ver os seus registros' : 'Toque no seu nome';
+  el('dicaNome').textContent = noPortal
+    ? 'Só você vê o seu ponto: é preciso o seu PIN.'
+    : 'Depois é só digitar o seu PIN de 4 números.';
+  el('dicaPin').textContent = noPortal
+    ? 'Digite seu PIN de 4 números para abrir os seus registros.'
+    : 'Digite seu PIN de 4 números para registrar o ponto.';
+  el('voltarBater').hidden = !noPortal;
+}
+
+el('linkMeus').addEventListener('click', function(){
+  modo = 'portal';
+  escolhido = null; pin = '';
+  el('buscaNome').value = '';
+  pintaNomes();
+  ajustaModo();
+  passo('nome');
+  window.scrollTo(0, 0);
+});
+el('btnVoltarBater').addEventListener('click', voltaInicio);
+
+/* Acabou de bater: ja provou quem e, nao precisa digitar de novo. */
+el('btnVerMeus').addEventListener('click', function(){
+  if(!escolhido || pin.length !== 4) { voltaInicio(); return; }
+  abrePortal();
+});
+
+function mesDeHoje(){ return isoLocal(agora()).slice(0, 7); }
+function nomeDoMes(m){
+  var p = String(m || '').split('-');
+  if(p.length < 2) return '';
+  var d = new Date(+p[0], +p[1] - 1, 1);
+  var t = d.toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+function mesVizinho(m, passos){
+  var p = m.split('-');
+  var d = new Date(+p[0], +p[1] - 1 + passos, 1);
+  var mm = d.getMonth() + 1;
+  return d.getFullYear() + '-' + (mm < 10 ? '0' : '') + mm;
+}
+
+function abrePortal(){
+  if(ocupado || !escolhido) return;
+  ocupado = true;
+  el('pinMsg').className = 'msgPin neutra';
+  el('pinMsg').textContent = 'Abrindo os seus registros...';
+  portalFunc = escolhido;
+  portalPin  = pin;
+  portalMes  = mesDeHoje();
+  buscaMes(function(erro){
+    ocupado = false;
+    if(erro){
+      // PIN errado ou bloqueio: a mensagem vem pronta do servidor
+      el('pinMsg').className = 'msgPin';
+      el('pinMsg').textContent = erro;
+      pin = ''; pintaPontos(true);
+      portalFunc = null; portalPin = '';
+      return;
+    }
+    passo('nome');            // deixa a tela de batida pronta por baixo
+    pin = '';
+    mostraTela('portal');
+  });
+}
+
+function buscaMes(pronto){
+  if(!portalFunc){ pronto('Sessão encerrada.'); return; }
+  mostraMsg('ptMsg', '');
+  supa.rpc('ponto_meu_mes', {
+    p_token: TOKEN,
+    p_func:  portalFunc.id,
+    p_pin:   portalPin,
+    p_mes:   portalMes
+  }).then(function(res){
+    var d = res.data;
+    if(res.error || !d){ pronto('Sem conexão. Tente de novo.'); return; }
+    if(!d.ok){ pronto(d.msg || 'Não deu para abrir os registros.'); return; }
+    marcaHoraServidor(d.agora);
+    pintaPortal(d);
+    pronto(null);
+  });
+}
+
+function pintaPortal(d){
+  el('ptIni').textContent    = iniciais(d.nome);
+  el('ptNome').textContent   = d.nome;
+  el('ptFuncao').textContent = (d.funcao || '') + (d.folha ? ' · folha ' + d.folha : '');
+  el('ptQualMes').textContent = nomeDoMes(d.mes);
+  el('ptProximo').disabled = (d.mes >= mesDeHoje());
+
+  var t = d.totais || {};
+  var saldo = t.saldoMin || 0;
+  // O turno de hoje ainda esta correndo: se ele entrasse na conta, todo
+  // mundo passaria o dia inteiro vendo saldo negativo. Fecha em ontem.
+  var ate = d.mesCorrente ? ' até ontem' : '';
+  el('ptResumo').innerHTML =
+    '<div class="ptCartoes">' +
+      cartaoPortal('Horas trabalhadas' + ate, hhmm(t.trabalhadoMin || 0), 'zero') +
+      cartaoPortal('Horas previstas' + ate,  hhmm(t.previstoMin || 0),  'zero') +
+      cartaoPortal('Saldo' + (ate || ' do mês'),
+        (saldo > 0 ? '+' : saldo < 0 ? '−' : '') + hhmm(Math.abs(saldo)),
+        saldo > 0 ? 'pos' : saldo < 0 ? 'neg' : 'zero') +
+      cartaoPortal('Atrasos somados', hhmm(t.atrasoMin || 0),
+        (t.atrasoMin || 0) > 0 ? 'neg' : 'zero') +
+    '</div>';
+
+  // Dias anteriores ao primeiro uso nao entram na conta nem na lista: nao
+  // foram falta de ninguem, o sistema e que ainda nao estava de pe.
+  if(d.desde && d.desde > d.mes + '-01'){
+    mostraMsg('ptMsg', 'A contagem deste mês começa em ' +
+      d.desde.slice(8,10) + '/' + d.desde.slice(5,7) +
+      ', o seu primeiro dia batendo o ponto por aqui.', 'info');
+  }
+
+  var dias = (d.dias || []).slice().reverse();   // o dia de hoje primeiro
+  var comAlgo = dias.filter(function(x){ return x.batidas.length || x.falta; });
+  if(!comAlgo.length){
+    el('ptDias').innerHTML =
+      '<div class="ptVazio">Nenhuma batida registrada neste mês.</div>';
+    return;
+  }
+  el('ptDias').innerHTML = dias.map(function(x){
+    if(!x.contado && !x.batidas.length) return '';
+    if(x.folga && !x.batidas.length) return '';
+    var classe = 'ptDia' + (x.falta ? ' falta' : '') + (x.folga ? ' folga' : '');
+    var marcas = x.batidas.map(function(b){
+      return '<span class="marca">' + escapaHtml(b.hora) +
+             '<small>' + escapaHtml(b.rotulo) + '</small></span>';
+    }).join('');
+    var nota = '';
+    if(x.falta){
+      nota = '<div class="nota">Sem batida em dia de trabalho. Fale com o RH se estiver errado.</div>';
+    } else if(x.atrasoMin != null && x.atrasoMin > 5){
+      nota = '<div class="nota atraso">' + x.atrasoMin + ' minutos depois do horário.</div>';
+    } else if(x.batidas.length && x.batidas.length % 2 !== 0){
+      nota = '<div class="nota">Falta a batida de saída deste dia.</div>';
+    }
+    return '<div class="' + classe + '">' +
+             '<div class="cab">' +
+               '<span class="data">' + escapaHtml(x.rotulo) + '</span>' +
+               '<span class="sem">' + escapaHtml(DIAS_NOME[x.semana] || '') + '</span>' +
+               '<span class="tot">' + (x.trabalhadoMin ? hhmm(x.trabalhadoMin) : '') + '</span>' +
+             '</div>' +
+             (marcas ? '<div class="marcas">' + marcas + '</div>' : '') +
+             nota +
+           '</div>';
+  }).join('');
+}
+
+function cartaoPortal(rotulo, valor, tom){
+  return '<div class="ptCartao"><div class="rot">' + escapaHtml(rotulo) + '</div>' +
+         '<div class="val ' + tom + '">' + escapaHtml(valor) + '</div></div>';
+}
+
+function trocaMes(passos){
+  var alvo = mesVizinho(portalMes, passos);
+  if(alvo > mesDeHoje()) return;
+  portalMes = alvo;
+  buscaMes(function(erro){
+    if(erro) mostraMsg('ptMsg', erro, 'erro');
+  });
+}
+el('ptAnterior').addEventListener('click', function(){ trocaMes(-1); });
+el('ptProximo').addEventListener('click', function(){ trocaMes(1); });
+
+el('btnSairPortal').addEventListener('click', function(){
+  // O PIN nao fica guardado em lugar nenhum depois que a pessoa sai.
+  portalFunc = null; portalPin = ''; portalMes = '';
+  el('ptDias').innerHTML = ''; el('ptResumo').innerHTML = '';
+  mostraMsg('ptMsg', '');
+  mostraTela('batida');
+  voltaInicio();
+});
 
 /* ====================================================================
    ADMIN
@@ -881,10 +1335,15 @@ var cfgAtual = {};
 var equipe = [];
 var escalaEdit = null;
 
-function mostraAdmin(sim){
-  el('telaBatida').hidden = !!sim;
-  el('telaAdmin').hidden  = !sim;
+/* Tres portas, uma de cada vez: a batida (o que o QR abre), o portal do
+   colaborador e o painel do RH. */
+function mostraTela(qual){
+  el('telaBatida').hidden = qual !== 'batida';
+  el('telaPortal').hidden = qual !== 'portal';
+  el('telaAdmin').hidden  = qual !== 'admin';
+  window.scrollTo(0, 0);
 }
+function mostraAdmin(sim){ mostraTela(sim ? 'admin' : 'batida'); }
 
 el('linkAdmin').addEventListener('click', function(){
   mostraAdmin(true);
@@ -896,11 +1355,23 @@ el('linkVoltarBatida').addEventListener('click', function(){
   mostraAdmin(false);
 });
 
-el('btnEntrar').addEventListener('click', function(){
+el('adForm').addEventListener('submit', function(ev){
+  ev.preventDefault();
   var email = el('adEmail').value.trim();
   var senha = el('adSenha').value;
-  if(!email || !senha){ mostraMsg('adLoginMsg', 'Preencha e-mail e senha.', 'erro'); return; }
-  var b = this;
+  if(!email || !senha){
+    // Se o campo esta visivelmente preenchido mas chega vazio aqui, quem
+    // preencheu foi o navegador e ele ainda nao liberou o valor. Dizer
+    // "preencha" seria mentira: o certo e pedir para tocar no campo.
+    var autoPreenchido = false;
+    try{ autoPreenchido = el('adSenha').matches(':-webkit-autofill') ||
+                          el('adSenha').matches(':autofill'); }catch(e){}
+    mostraMsg('adLoginMsg', autoPreenchido
+      ? 'Toque no campo da senha e aperte Enter — o navegador preencheu, mas ainda não liberou o valor para a página.'
+      : 'Preencha e-mail e senha.', 'erro');
+    return;
+  }
+  var b = el('btnEntrar');
   b.disabled = true; b.textContent = 'Entrando...';
   supa.auth.signInWithPassword({ email: email, password: senha }).then(function(res){
     b.disabled = false; b.textContent = 'Entrar';
@@ -917,6 +1388,9 @@ el('btnEntrar').addEventListener('click', function(){
 
 el('btnSair').addEventListener('click', function(){
   supa.auth.signOut().then(function(){
+    cfgAtual = {}; equipe = []; escalaEdit = null;
+    el('adSenha').value = '';
+    mostraMsg('adLoginMsg', '');
     el('adPainel').hidden = true;
     el('adLogin').hidden = false;
   });
@@ -941,9 +1415,9 @@ function entrou(sessao){
     el('adPainel').hidden = false;
     pintaQr();
     preencheCfg();
-    var hoje = new Date();
-    el('hojeData').value = hoje.toISOString().slice(0,10);
-    el('fecharMes').value = hoje.toISOString().slice(0,7);
+    var hoje = agora();
+    el('hojeData').value = isoLocal(hoje);
+    el('fecharMes').value = isoLocal(hoje).slice(0,7);
     carregaEquipe();
     carregaDia();
   });
@@ -965,14 +1439,146 @@ Array.prototype.forEach.call(document.querySelectorAll('.aba'), function(b){
 });
 
 /* ---- QR / cartaz ---- */
+/* O cartaz so presta se o endereco do QR for alcancavel pelo celular do
+   colaborador. Aberta como arquivo, ou servida em localhost, a propria
+   barra de endereco nao serve: aponta para dentro deste computador.
+   Nesse caso o RH escolhe o endereco aqui — o da rede da loja (o mesmo
+   wi-fi) ou o endereco publicado na internet. Fica guardado NESTE
+   computador, porque cada maquina que imprime pode estar vendo a pagina
+   por um caminho diferente. */
+var CHAVE_END = 'ponto_endereco_base';
+
+function ehLocal(h){
+  return /^(localhost|127\.0\.0\.1|\[::1\]|::1|0\.0\.0\.0)$/i.test(String(h || ''));
+}
+/* Aceita "192.168.0.10:8901" tanto quanto "https://conta.github.io/ponto/".
+   Devolve o endereco pronto, ou null se nao servir para um celular. */
+function arrumaBase(txt){
+  var s = String(txt || '').trim();
+  if(!s) return null;
+  if(!/^https?:\/\//i.test(s)){
+    if(/^[a-z][a-z0-9+.-]*:/i.test(s)) return null;   // file:, ftp: e afins
+    s = 'http://' + s;
+  }
+  var u;
+  try{ u = new URL(s); }catch(e){ return null; }
+  if(u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+  if(ehLocal(u.hostname)) return null;
+  u.hash = ''; u.search = '';
+  return u.href;
+}
+function baseGuardada(){
+  return arrumaBase(guarda.getItem(CHAVE_END));
+}
+function baseAutomatica(){
+  if(location.protocol !== 'http:' && location.protocol !== 'https:') return null;
+  if(ehLocal(location.hostname)) return null;
+  return location.origin + location.pathname;
+}
+function baseDoPonto(){
+  return baseGuardada() || baseAutomatica();
+}
 function urlDoPonto(){
-  return location.origin + location.pathname + '#t=' + encodeURIComponent(cfgAtual.token || '');
+  return (baseDoPonto() || '') + '#t=' + encodeURIComponent(cfgAtual.token || '');
+}
+function problemaNoEndereco(){
+  if(baseDoPonto()) return null;
+  if(location.protocol !== 'http:' && location.protocol !== 'https:'){
+    return 'Esta página está aberta como arquivo do computador, e não por um ' +
+           'endereço da internet.';
+  }
+  return 'Esta página está sendo servida em ' + location.hostname + ', que só existe ' +
+         'dentro deste computador.';
+}
+
+/* Enderecos desta maquina na rede local, perguntados ao servidor de
+   desenvolvimento. Publicada na internet a resposta nao existe, e a lista
+   simplesmente nao aparece. */
+var sugestoesRede = null;
+function buscaRede(depois){
+  if(sugestoesRede !== null){ depois(sugestoesRede); return; }
+  if(!window.fetch || location.protocol === 'file:'){ sugestoesRede = []; depois([]); return; }
+  var respondeu = false;
+  var fim = function(lista){
+    if(respondeu) return;
+    respondeu = true;
+    sugestoesRede = lista;
+    depois(lista);
+  };
+  fetch('/rede.json', { cache:'no-store' })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      var porta = (d && d.porta) || location.port;
+      fim((d && d.enderecos ? d.enderecos : []).map(function(e){
+        return { url:'http://' + e.ip + (porta ? ':' + porta : '') + '/', placa:e.placa };
+      }));
+    })['catch'](function(){ fim([]); });
+}
+
+function pintaEndereco(){
+  var atual = baseDoPonto();
+  var manual = baseGuardada();
+  el('qrEndCampo').value = manual || '';
+  buscaRede(function(lista){
+    var itens = lista.filter(function(x){ return x.url !== atual; });
+    var html = '';
+    if(itens.length){
+      html = '<div class="sugTit">Endereços deste computador na rede local</div>' +
+        itens.map(function(x){
+          return '<button class="sugere" data-url="' + escapaHtml(x.url) + '">' +
+                 escapaHtml(x.url) +
+                 '<small>Abre nos celulares ligados no mesmo wi-fi, enquanto este ' +
+                 'computador estiver ligado com o servidor aberto (' + escapaHtml(x.placa) + ').</small>' +
+                 '</button>';
+        }).join('');
+    }
+    el('qrSugestoes').innerHTML = html;
+  });
+}
+
+el('qrSugestoes').addEventListener('click', function(ev){
+  var b = ev.target.closest('.sugere');
+  if(b) aplicaEndereco(b.getAttribute('data-url'));
+});
+el('btnUsarEnd').addEventListener('click', function(){
+  aplicaEndereco(el('qrEndCampo').value);
+});
+el('qrEndCampo').addEventListener('keydown', function(ev){
+  if(ev.key === 'Enter'){ ev.preventDefault(); aplicaEndereco(el('qrEndCampo').value); }
+});
+el('btnLimparEnd').addEventListener('click', function(){
+  guarda.removeItem(CHAVE_END);
+  mostraMsg('qrEndMsg', 'Voltou ao automático: o QR passa a usar o endereço em que esta página estiver aberta.', 'info');
+  pintaQr();
+});
+function aplicaEndereco(txt){
+  var base = arrumaBase(txt);
+  if(!base){
+    mostraMsg('qrEndMsg', 'Este endereço não serve. Ele precisa ser um http:// ou https:// que o ' +
+      'celular do colaborador alcance — localhost não vale, porque só existe neste computador.', 'erro');
+    return;
+  }
+  guarda.setItem(CHAVE_END, base);
+  mostraMsg('qrEndMsg', 'Endereço guardado. O cartaz abaixo já aponta para ele — confira antes de imprimir.', 'ok');
+  pintaQr();
 }
 
 function pintaQr(){
+  pintaEndereco();
+  var problema = problemaNoEndereco();
+  if(problema){
+    el('qrEnd').open = true;
+    el('qrUrlBox').className = 'msg erro';
+    el('qrUrlBox').textContent = problema +
+      ' O QR apontaria para cá e nenhum celular abriria. Escolha abaixo o endereço ' +
+      'em que o celular alcança esta página.';
+    el('qrArea').innerHTML = '';
+    return;
+  }
   var url = urlDoPonto();
   el('qrUrlBox').className = 'msg info';
-  el('qrUrlBox').textContent = url;
+  el('qrUrlBox').textContent = url +
+    (baseGuardada() ? '  (endereço escolhido à mão)' : '');
 
   var svg = '';
   try{
@@ -1003,9 +1609,15 @@ function pintaQr(){
     '</div>';
 }
 
-el('btnImprimir').addEventListener('click', function(){ window.print(); });
+el('btnImprimir').addEventListener('click', function(){
+  var problema = problemaNoEndereco();
+  if(problema){ mostraMsg('qrMsg', problema + ' Não há cartaz para imprimir.', 'erro'); return; }
+  window.print();
+});
 
 el('btnCopiarLink').addEventListener('click', function(){
+  var problema = problemaNoEndereco();
+  if(problema){ mostraMsg('qrMsg', problema + ' Ainda não há link para copiar.', 'erro'); return; }
   var url = urlDoPonto();
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(url).then(function(){
@@ -1132,6 +1744,43 @@ function pintaEquipe(){
     mostraMsg('equipeMsg', '');
   }
 }
+
+el('btnGerarPins').addEventListener('click', function(){
+  var faltam = equipe.filter(function(c){ return c.ativo && !c.temPin; }).length;
+  if(!faltam){
+    mostraMsg('equipeMsg', 'Todo mundo que está liberado já tem PIN. ' +
+      'Para trocar o de alguém, use o botão da linha da pessoa.', 'info');
+    return;
+  }
+  if(!confirm('Sortear um PIN para ' + faltam + ' colaborador(es) sem PIN?\n\n' +
+              'A lista aparece UMA vez na tela, para você imprimir e entregar. ' +
+              'Depois disso o PIN não pode mais ser lido, só trocado.')) return;
+  var b = el('btnGerarPins');
+  b.disabled = true; b.textContent = 'Sorteando...';
+  supa.rpc('ponto_admin_pins_gerar', { p_todos: false }).then(function(res){
+    b.disabled = false; b.textContent = 'Sortear os PINs que faltam';
+    if(res.error){ mostraMsg('equipeMsg', res.error.message, 'erro'); return; }
+    var d = res.data || {};
+    el('listaPins').innerHTML =
+      '<div class="cartao" style="border:2px solid var(--brand);margin:0 0 16px;">' +
+        '<h3>PINs sorteados — anote ou imprima agora</h3>' +
+        '<p class="sub">Esta lista <b>não aparece de novo</b>. Entregue cada PIN só ' +
+        'para a pessoa dele.</p>' +
+        '<table class="tab"><thead><tr><th>Nome</th><th>Folha</th><th>PIN</th></tr></thead><tbody>' +
+        (d.itens || []).map(function(x){
+          return '<tr><td>' + escapaHtml(x.nome) + '</td><td>' + escapaHtml(x.folha || '—') +
+                 '</td><td style="font-size:19px;font-weight:800;letter-spacing:.12em;">' +
+                 escapaHtml(x.pin) + '</td></tr>';
+        }).join('') +
+        '</tbody></table>' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">' +
+          '<button class="btn fantasma pequeno" id="btnFecharPins">Já anotei, esconder</button>' +
+        '</div>' +
+      '</div>';
+    el('btnFecharPins').addEventListener('click', function(){ el('listaPins').innerHTML = ''; });
+    carregaEquipe();   // repinta a tabela; o aviso de "falta PIN" sai sozinho
+  });
+});
 
 el('tabEquipe').addEventListener('change', function(ev){
   var c = ev.target.closest('.chkAtivo');
