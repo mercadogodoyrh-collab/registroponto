@@ -149,6 +149,19 @@
     font-size:60px; font-weight:800; line-height:1.05; margin:12px 0 4px;
     font-variant-numeric:tabular-nums; letter-spacing:-.03em;
   }
+  /* ---- confirmar antes de gravar ---- */
+  .confCartao{
+    background:var(--panel); border:2px solid var(--brand); border-radius:14px;
+    padding:20px 18px; text-align:center; box-shadow:var(--shadow-sm); margin:4px 0 16px;
+  }
+  .confCartao .cfRot{font-size:22px; font-weight:800; line-height:1.2; color:var(--brand-dark);}
+  .confCartao .cfHora{
+    font-size:52px; font-weight:800; line-height:1.05; margin:8px 0 0;
+    font-variant-numeric:tabular-nums; letter-spacing:-.03em;
+  }
+  .confCartao .cfNota{font-size:13.5px; color:var(--ink-soft); margin-top:8px;}
+  .msg.alerta{background:var(--aviso-bg); color:#6B4409; display:block;}
+
   .resultado .obs{font-size:14px; margin-top:10px; font-weight:600;}
   .resultado .obs.atrasou{color:var(--aviso);}
   .resultado .obs.ok{color:var(--brand);}
@@ -420,8 +433,7 @@
       <p class="dica" id="prDica">
         Aponte a câmera para o QR Code do cartaz. Depois é só digitar a sua senha.
       </p>
-      <button class="btn bloco" id="btnBaterAgora" hidden>Bater o ponto</button>
-      <button class="btn bloco" id="btnLerQr">Ler o QR Code</button>
+      <button class="btn bloco" id="btnBaterAgora">Bater o ponto</button>
       <div class="msg" id="camMsg"></div>
       <button class="btn fantasma bloco" id="btnMeusRegistros" style="margin-top:12px;">
         Ver meus registros
@@ -488,6 +500,33 @@
       </div>
       <div class="msg" id="camErro"></div>
       <button class="btn fantasma bloco" id="btnFecharCamera" style="margin-top:14px;">Cancelar</button>
+    </section>
+
+    <!-- passo 3b: confere ANTES de gravar. Uma batida com o nome errado na
+         tela do colaborador vale menos que um toque a mais aqui. -->
+    <section id="passoConfirma" hidden>
+      <div class="pinTopo">
+        <div class="ini" id="cfIni"></div>
+        <div>
+          <div class="n" id="cfNome"></div>
+          <div class="f" id="cfFuncao"></div>
+        </div>
+      </div>
+      <p class="dica">Confirme os dados do registro:</p>
+      <div class="confCartao">
+        <div class="cfRot" id="cfRotulo">—</div>
+        <div class="cfHora" id="cfHora">--:--</div>
+        <div class="cfNota" id="cfNota"></div>
+      </div>
+      <div class="msg" id="cfMsg"></div>
+      <button class="btn bloco" id="btnConfirmaBater">Confirmar</button>
+      <button class="btn fantasma bloco" id="btnOutraPonta" style="margin-top:10px;">
+        Alterar tipo de registro
+      </button>
+      <div id="cfOpcoes" hidden></div>
+      <div style="margin-top:16px; text-align:center;">
+        <button class="btn fantasma pequeno" id="btnCancelaConf">Cancelar</button>
+      </div>
     </section>
 
     <!-- passo 3: resultado -->
@@ -673,16 +712,22 @@
         <div class="cartao">
           <h3>Horário de trabalho</h3>
           <p class="sub">
-            É o mesmo quadro do cartão ponto. Dia em branco = folga. O sistema usa isso para
-            saber o que é atraso e o que é hora extra.
+            Três coisas por dia: <b>que horas entra</b>, <b>que horas sai</b> e
+            <b>quanto dura o intervalo</b>. Dia em branco = folga.
+          </p>
+          <p class="sub">
+            <b>A hora do almoço não se cadastra</b> — num mercado ela depende do movimento.
+            Cada um sai quando dá, e o sistema cobra só a duração, contada da própria saída.
+            <b>Domingo e o 3º sábado do mês</b> são meio período automático: saída 12:30,
+            sem intervalo, do jeito que já está na Gestão de RH.
           </p>
           <div style="margin-bottom:14px;">
             <label class="campo" for="selEscala">Colaborador</label>
             <select id="selEscala" class="busca" style="margin-bottom:0;"></select>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-            <button class="btn fantasma pequeno" id="btnEscalaA">Aplicar escala até 18:00 (dom. folga)</button>
-            <button class="btn fantasma pequeno" id="btnEscalaB">Aplicar escala até 18:30 (dom. 07:30–13:00)</button>
+            <button class="btn fantasma pequeno" id="btnEscalaA">07:30–18:00 · 1h30 (dom. folga)</button>
+            <button class="btn fantasma pequeno" id="btnEscalaB">07:30–18:30 · 1h30 (dom. 07:30–12:30)</button>
             <button class="btn fantasma pequeno" id="btnEscalaLimpar">Limpar tudo</button>
           </div>
           <div class="rolagem"><table class="tab escalaTab" id="tabEscala"></table></div>
@@ -710,36 +755,46 @@
           <div class="msg" id="localMsg"></div>
         </div>
         <div class="cartao">
-          <h3>Faixas de horário</h3>
+          <h3>Ordem das batidas</h3>
           <p class="sub">
-            É o horário da batida que decide se ela é <b>Entrada 1</b>, <b>Saída 1</b>,
-            <b>Entrada 2</b> ou <b>Saída 2</b> — não a ordem em que a pessoa bateu. Quem chega
-            às 15h para o turno da tarde registra Entrada 2, mesmo sendo a primeira batida do dia.
-            Cada horário abaixo é <b>o começo</b> da faixa; tudo que vier antes do primeiro é Entrada 1.
+            Quem diz o que cada batida é <b>não é o relógio, é a ordem</b>: a 1ª do dia é a
+            entrada, a 2ª é a saída para o almoço, a 3ª é a volta e a 4ª é a saída.
+            Num mercado o almoço não tem hora marcada — por isso o horário não decide nada.
+          </p>
+          <p class="sub">
+            E <b>a pessoa confirma o nome da batida na tela antes de gravar</b>, com um botão
+            para trocar. Se alguém esqueceu a batida anterior, corrige ali mesmo, sem virar
+            uma volta do almoço que nunca aconteceu.
           </p>
           <div class="linhaCampos" style="margin-bottom:14px;">
-            <div><label class="campo" for="cfgSai1">Saída 1 a partir de</label>
-                 <input type="time" id="cfgSai1"></div>
-            <div><label class="campo" for="cfgEnt2">Entrada 2 a partir de</label>
-                 <input type="time" id="cfgEnt2"></div>
-            <div><label class="campo" for="cfgSai2">Saída 2 a partir de</label>
-                 <input type="time" id="cfgSai2"></div>
+            <div><label class="campo" for="cfgDuvida">A 2ª batida vira pergunta a partir de</label>
+                 <input type="time" id="cfgDuvida"></div>
           </div>
           <div class="msg info" id="faixasResumo"></div>
 
           <h3 style="margin-top:22px;">Hora extra, atraso e saída antecipada</h3>
           <p class="sub">
-            A faixa acima diz <b>qual</b> batida é. Já a comparação com o <b>horário da escala
-            de cada pessoa</b> diz como ela foi: quem entra 06:20 numa escala de 07:30 registra
-            Entrada 1 com <b>1h10 de hora extra</b>; quem sai 18:00 numa escala de 18:30 registra
-            Saída 2 com <b>30 min de saída antecipada</b>; depois das 18:30, hora extra de novo.
+            Só <b>duas</b> batidas viram ocorrência, e cada uma contra a sua própria régua:
+            a <b>entrada</b>, comparada com a hora de entrada da escala (06:20 numa escala de
+            07:30 é hora extra; 07:40 é atraso), e a <b>saída</b>, comparada com a hora de saída.
             A tolerância evita virar ocorrência por causa de dois minutos.
+          </p>
+          <p class="sub">
+            <b>O almoço não tem hora — tem duração.</b> A saída para o intervalo pode ser a
+            qualquer momento e <b>nunca gera atraso nem hora extra</b>; o relógio começa quando a
+            pessoa sai. Quem tem 1h30 e sai 14:10 tem até 15:40 para voltar, e só passar disso é
+            atraso. Sem a saída registrada o sistema <b>não julga</b>: marca para o RH conferir.
+            A hora que faltar no dia, se faltar, aparece sozinha no total trabalhado do mês.
+          </p>
+          <p class="sub">
+            Intervalo <b>curto demais</b> (abaixo do mínimo legal) aparece marcado na aba Hoje —
+            esse é risco da empresa, não falta do colaborador, e não entra na folha.
           </p>
           <!-- A tolerancia tem um dono so: a Gestao de RH. Ter dois lugares
                para editar o mesmo numero e como ter dois relogios na parede. -->
           <div class="msg info" id="regrasFolha"></div>
 
-          <button class="btn" id="btnSalvarFaixas">Salvar faixas</button>
+          <button class="btn" id="btnSalvarFaixas">Salvar</button>
           <div class="msg" id="faixasMsg"></div>
         </div>
 
@@ -899,6 +954,14 @@ function paraMin(txt){
   var v = (+m[1])*60 + (+m[2]);
   return (v >= 0 && v <= 1439) ? v : null;
 }
+/* Minutos do dia pelo relogio do SERVIDOR (o mesmo do topo da tela). Se o
+   computador do RH estiver com a hora errada, o aviso de intervalo nao pode
+   sair errado junto. */
+function minutosDeAgora(){
+  var t = agora();
+  return t ? t.getHours() * 60 + t.getMinutes() : null;
+}
+
 function mostraMsg(id, texto, tipo){
   var c = el(id);
   if(!c) return;
@@ -962,6 +1025,7 @@ var temLocal = false;
 var pin      = '';
 var ocupado  = false;
 var timerVolta = null;
+var previsao = null;    // o que a batida SERIA, esperando confirmacao
 /* 'bater' = fluxo normal do QR; 'portal' = a pessoa veio ver o próprio mês.
    O teclado da senha é o mesmo nos dois; só muda o que acontece quando o
    quarto número entra. */
@@ -1009,6 +1073,7 @@ function passo(qual){
   el('passoLogin').hidden  = qual !== 'login';
   el('passoPronto').hidden = qual !== 'pronto';
   el('passoPin').hidden    = qual !== 'pin';
+  el('passoConfirma').hidden = qual !== 'confirma';
   el('passoNovo').hidden   = qual !== 'novo';
   el('passoOk').hidden     = qual !== 'ok';
   el('passoCamera').hidden = qual !== 'camera';
@@ -1288,14 +1353,10 @@ function pintaPronto(){
   el('prIni').textContent    = iniciais(colab.nome);
   el('prNome').textContent   = colab.nome;
   el('prFuncao').textContent = colab.funcao || '';
-  el('btnBaterAgora').hidden = !tokenOk;
-  var b = el('btnLerQr');
-  b.className       = tokenOk ? 'btn fantasma bloco' : 'btn bloco';
-  b.textContent     = tokenOk ? 'Ler o QR Code de novo' : 'Ler o QR Code';
-  b.style.marginTop = tokenOk ? '10px' : '';
   el('prDica').textContent = tokenOk
     ? 'QR Code conferido. Toque em bater o ponto e digite a sua senha.'
-    : 'Aponte a câmera para o QR Code do cartaz. Depois é só digitar a sua senha.';
+    : 'Toque em bater o ponto e aponte a câmera para o QR Code do cartaz. ' +
+      'Depois é só digitar a sua senha.';
 }
 
 /* Logo depois de entrar (ou de voltar ao início): se o código do cartaz já
@@ -1342,9 +1403,8 @@ function tokenParaLer(){
   return TOKEN || guarda.getItem(CHAVE_TOKEN) || '';
 }
 
-el('btnLerQr').addEventListener('click', abreCamera);
-
 el('btnBaterAgora').addEventListener('click', function(){
+  // Sem o código do cartaz na mão, o primeiro passo da batida é lê-lo.
   if(!tokenOk){ abreCamera(); return; }
   modo = 'bater';
   abrePin();
@@ -1407,11 +1467,11 @@ el('teclado').addEventListener('click', function(ev){
   if(pin.length >= 4) return;
   pin += t;
   pintaPontos();
-  if(pin.length === 4) setTimeout(modo === 'portal' ? abrePortal : bater, 140);
+  if(pin.length === 4) setTimeout(modo === 'portal' ? abrePortal : prever, 140);
 });
 
 el('btnVoltarPin').addEventListener('click', function(){
-  pin = ''; modo = 'bater';
+  pin = ''; modo = 'bater'; previsao = null;
   mostraMsg('camMsg', '');
   pintaPronto();
   passo('pronto');
@@ -1445,15 +1505,133 @@ function pegaLocal(callback){
   );
 }
 
-function bater(){
+/* Nome da ponta quando a tela precisa preencher um espaco vazio: o que
+   veio do servidor sempre ganha, isto aqui e so para as linhas em branco.
+   Dia de duas pontas (domingo, 3o sabado) nao tem almoco nenhum. */
+function rotuloDaPonta(slot, pontas){
+  if(+pontas === 2){
+    return slot === 1 ? 'Entrada' : slot === 2 ? 'Saída'
+         : slot === 3 ? 'Entrada extra' : 'Saída extra';
+  }
+  return ['Entrada','Saída para o almoço','Volta do almoço','Saída',
+          'Entrada extra','Saída extra'][slot-1] || 'Saída extra';
+}
+
+/* ---- 1o passo da batida: perguntar ao servidor o que ela SERIA ----
+   Nada e gravado aqui. A pessoa ve o nome da ponta na tela e confirma —
+   assim uma batida nunca entra com o nome errado, nem quando a anterior
+   foi esquecida. */
+function prever(){
+  if(ocupado || !colab) return;
+  ocupado = true;
+  var deQuem = colab;
+  el('pinMsg').className = 'msgPin neutra';
+  el('pinMsg').textContent = 'Conferindo...';
+
+  supa.rpc('ponto_qr_prever', {
+    p_token: TOKEN, p_func: deQuem.id, p_pin: pin
+  }).then(function(res){
+    ocupado = false;
+    if(colab !== deQuem) return;      // desistiu no meio do caminho
+    var d = res.data;
+    if(res.error || !d){
+      el('pinMsg').className = 'msgPin';
+      el('pinMsg').textContent = 'Sem conexão. Tente de novo.';
+      pin = ''; pintaPontos(true);
+      return;
+    }
+    if(!d.ok){
+      el('pinMsg').className = 'msgPin';
+      el('pinMsg').textContent = d.msg || 'Não deu para registrar.';
+      pin = ''; pintaPontos(true);
+      return;
+    }
+    // bateu ha pouco: nao ha o que confirmar, mostramos o que ja esta gravado
+    if(d.repetida){ mostraResultado(d); return; }
+    previsao = d;
+    mostraConfirma(d);
+  });
+}
+
+/* A nota embaixo do cartao: o que muda para a pessoa depois deste toque. */
+function notaDaConfirmacao(d){
+  var prev = d.previsto || {};
+  var slot = +d.slot;
+  if(slot === 2 && +d.pontas === 4){
+    return 'Início do intervalo de ' + duracao(+prev.int || 0) + '.';
+  }
+  if(slot === 3 && +d.pontas === 4){
+    var saiu = (d.batidas || []).filter(function(x){ return +x.slot === 2; })[0];
+    return saiu ? 'Início do intervalo registrado às ' + saiu.hora + '.' : '';
+  }
+  if((slot === 4 && +d.pontas === 4) || (slot === 2 && +d.pontas === 2)){
+    return 'Encerramento da jornada.';
+  }
+  return '';
+}
+
+function mostraConfirma(d){
+  el('cfIni').textContent    = iniciais(colab.nome);
+  el('cfNome').textContent   = colab.nome;
+  el('cfFuncao').textContent = colab.funcao || '';
+  el('cfRotulo').textContent = d.rotulo;
+  el('cfHora').textContent   = d.hora;
+  el('cfNota').textContent   = notaDaConfirmacao(d);
+  // A duvida nao decide nada sozinha: ela avisa e deixa a pessoa escolher.
+  mostraMsg('cfMsg', d.duvida || '', 'alerta');
+  el('cfOpcoes').hidden = true;
+  el('cfOpcoes').innerHTML = '';
+  passo('confirma');
+}
+
+el('btnOutraPonta').addEventListener('click', function(){
+  if(!previsao) return;
+  var ops = (previsao.opcoes || []).filter(function(o){ return +o.slot !== +previsao.slot; });
+  if(!ops.length){
+    mostraMsg('cfMsg', 'Não há outra batida disponível hoje.', 'erro');
+    return;
+  }
+  el('cfOpcoes').innerHTML = ops.map(function(o){
+    return '<button class="btn fantasma bloco escolhePonta" data-slot="' + o.slot +
+           '" style="margin-top:8px;">' + escapaHtml(o.rotulo) + '</button>';
+  }).join('');
+  el('cfOpcoes').hidden = false;
+});
+
+el('cfOpcoes').addEventListener('click', function(ev){
+  var b = ev.target.closest('.escolhePonta');
+  if(!b || !previsao) return;
+  previsao.slot   = +b.getAttribute('data-slot');
+  previsao.rotulo = b.textContent.trim();
+  el('cfRotulo').textContent = previsao.rotulo;
+  el('cfNota').textContent   = notaDaConfirmacao(previsao);
+  el('cfOpcoes').hidden = true;
+  mostraMsg('cfMsg', '');
+});
+
+el('btnCancelaConf').addEventListener('click', function(){
+  previsao = null; pin = ''; modo = 'bater';
+  mostraMsg('camMsg', '');
+  pintaPronto();
+  passo('pronto');
+});
+
+el('btnConfirmaBater').addEventListener('click', function(){
+  if(!previsao) return;
+  bater(previsao.slot);
+});
+
+/* ---- 2o passo: grava a ponta que a pessoa confirmou ---- */
+function bater(slot){
   if(ocupado || !colab) return;
   ocupado = true;
   // Enquanto o GPS responde da para sair da conta: guardamos de quem era a
   // batida para nao jogar o resultado dela na cara de outra pessoa.
   var deQuem = colab;
-  el('pinMsg').className = 'msgPin neutra';
-  el('pinMsg').textContent = (exigeGps && temLocal)
-    ? 'Conferindo a sua localização...' : 'Registrando...';
+  var botao = el('btnConfirmaBater');
+  botao.disabled = true;
+  botao.textContent = (exigeGps && temLocal) ? 'Conferindo a localização...' : 'Registrando...';
+  mostraMsg('cfMsg', '');
 
   pegaLocal(function(loc){
     supa.rpc('ponto_qr_bater', {
@@ -1463,23 +1641,23 @@ function bater(){
       p_lat:   loc ? loc.lat : null,
       p_lng:   loc ? loc.lng : null,
       p_prec:  loc ? Math.round(loc.prec) : null,
-      p_disp:  navigator.userAgent
+      p_disp:  navigator.userAgent,
+      p_slot:  slot || null
     }).then(function(res){
       ocupado = false;
-      if(colab !== deQuem) return;       // desistiu no meio do caminho
+      botao.disabled = false;
+      botao.textContent = 'Confirmar';
+      if(colab !== deQuem) return;
       var d = res.data;
       if(res.error || !d){
-        el('pinMsg').className = 'msgPin';
-        el('pinMsg').textContent = 'Sem conexão. Tente de novo.';
-        pin = ''; pintaPontos(true);
+        mostraMsg('cfMsg', 'Sem conexão. Tente de novo.', 'erro');
         return;
       }
       if(!d.ok){
-        el('pinMsg').className = 'msgPin';
-        el('pinMsg').textContent = d.msg || 'Não deu para registrar.';
-        pin = ''; pintaPontos(true);
+        mostraMsg('cfMsg', d.msg || 'Não deu para registrar.', 'erro');
         return;
       }
+      previsao = null;
       mostraResultado(d);
     });
   });
@@ -1502,18 +1680,43 @@ function frasePonto(classe, slot){
   var entrada = (slot % 2) === 1;
   switch(classe.tipo){
     case 'extra':
-      return { tom:'ok', texto: duracao(min) + ' de hora extra' +
-               (entrada ? ' — entrou antes do horário (' : ' — saiu depois do horário (') +
+      return { tom:'ok', texto: duracao(min) + ' de hora extra. ' +
+               (entrada ? 'Entrada antes do horário previsto (' : 'Saída após o horário previsto (') +
                prev + ').' };
     case 'atraso':
-      return { tom:'atrasou', texto: duracao(min) + ' de atraso (previsto ' + prev + ').' };
+      // Na volta do almoco o que se cobra e a duracao do intervalo, entao a
+      // frase precisa mostrar o tempo gasto -- e ai nao sobra discussao.
+      if(classe.gastoMin != null){
+        return { tom:'atrasou', texto: duracao(min) + ' de atraso. Intervalo de ' +
+                 duracao(+classe.gastoMin) + ', previsto ' +
+                 duracao(+classe.intervaloMin) + ' (retorno até ' + prev + ').' };
+      }
+      return { tom:'atrasou', texto: duracao(min) + ' de atraso. Horário previsto: ' + prev + '.' };
+    // A saida para o almoco nao tem hora certa: o relogio do intervalo
+    // comeca quando a pessoa sai. Por isso ela nunca vira ocorrencia.
+    case 'intervalo':
+      return { tom:'ok', texto:'Intervalo iniciado. Retorno previsto até ' +
+               hhmm(+classe.limite) + ' (' + duracao(+classe.intervaloMin || 0) + ').' };
+    case 'intervalo_ok':
+      return { tom:'ok', texto:'Intervalo de ' + duracao(+classe.gastoMin || 0) +
+               ', dentro do previsto (' + duracao(+classe.intervaloMin || 0) + ').' };
     case 'antecipada':
       return { tom:'atrasou', texto: 'Saída antecipada em ' + duracao(min) +
-               ' (previsto ' + prev + ').' };
+               '. Horário previsto: ' + prev + '.' };
+    // Intervalo abaixo do minimo legal e risco da empresa, nao falta da
+    // pessoa: avisa sem acusar, e o RH ve na tela do dia.
+    case 'intervalo_curto':
+      return { tom:'', texto:'Intervalo de ' + duracao(+classe.gastoMin || 0) +
+               ', abaixo do mínimo de ' + duracao(+classe.minimoMin || 60) +
+               '. Sujeito a conferência do RH.' };
+    // Sem a saida registrada nao da para medir o intervalo. O sistema nao
+    // inventa atraso: manda para o RH.
+    case 'sem_par':
+      return { tom:'', texto:'Sem registro do início do intervalo. Sujeito a conferência do RH.' };
     case 'no_horario':
-      return { tom:'ok', texto:'No horário.' };
+      return { tom:'ok', texto:'Dentro do horário previsto.' };
     case 'fora_da_escala':
-      return { tom:'', texto:'Fora da escala deste dia — o RH confere.' };
+      return { tom:'', texto:'Registro fora da escala do dia. Sujeito a conferência do RH.' };
   }
   return null;
 }
@@ -1531,11 +1734,14 @@ function mostraResultado(d){
     obs = '<div class="obs ' + f.tom + '">' + escapaHtml(f.texto) + '</div>';
   }
 
-  var rotulos = ['Entrada','Saída para o almoço','Volta do almoço','Saída','Entrada extra','Saída extra'];
+  // Domingo e 3o sabado sao meio periodo: duas linhas, sem almoco nenhum.
+  var pontas = +d.pontas === 2 ? 2 : 4;
   var feitas = {};
-  var quantas = 4;
+  var nomes = {};
+  var quantas = pontas;
   (d.batidas || []).forEach(function(b){
     feitas[b.slot] = b.hora;
+    nomes[b.slot]  = b.rotulo;
     // pelo maior slot, nao pela quantidade: quem tem so a 1 e a 6 (o RH
     // lancou na mao) tem duas batidas, mas seis linhas para mostrar.
     if(b.slot > quantas) quantas = b.slot;
@@ -1545,7 +1751,7 @@ function mostraResultado(d){
   for(var s = 1; s <= quantas; s++){
     var h = feitas[s];
     linhas += '<div class="linha' + (h ? '' : ' vazia') + '">' +
-                '<span>' + rotulos[s-1] + '</span>' +
+                '<span>' + escapaHtml(nomes[s] || rotuloDaPonta(s, pontas)) + '</span>' +
                 '<b>' + (h || '--:--') + '</b>' +
               '</div>';
   }
@@ -1571,7 +1777,7 @@ function mostraResultado(d){
 
 function voltaInicio(){
   if(timerVolta){ clearInterval(timerVolta); timerVolta = null; }
-  pin = ''; modo = 'bater';
+  pin = ''; modo = 'bater'; previsao = null;
   if(!colab){ abreLogin(''); return; }
   mostraMsg('camMsg', '');
   pintaPronto();
@@ -1686,7 +1892,8 @@ function pintaPortal(d){
       'Hora extra e atrasos são exatamente os números que entram no seu ' +
       'fechamento do mês, já com a tolerância de ' +
       escapaHtml(String((d.regras && d.regras.tolAtraso) != null ? d.regras.tolAtraso : 5)) +
-      ' minutos aplicada.</p>';
+      ' minutos aplicada. O horário do seu intervalo é livre: o que conta é a ' +
+      'duração, contada a partir da hora em que você saiu.</p>';
 
   // Dias anteriores ao primeiro uso nao entram na conta nem na lista: nao
   // foram falta de ninguem, o sistema e que ainda nao estava de pe.
@@ -1719,13 +1926,17 @@ function pintaPortal(d){
 
     var notas = [];
     if(x.falta){
-      notas.push(['', 'Sem batida em dia de trabalho. Fale com o RH se estiver errado.']);
+      notas.push(['', 'Nenhum registro em dia de trabalho. Procure o RH em caso de divergência.']);
     } else {
+      if(x.meioPeriodo)   notas.push(['', 'Meio período (3º sábado), sem intervalo.']);
       if(x.extraMin)      notas.push(['extra',  duracao(x.extraMin) + ' de hora extra.']);
       if(x.atrasoMin)     notas.push(['atraso', duracao(x.atrasoMin) + ' de atraso.']);
       if(x.antecipadaMin) notas.push(['atraso', 'Saída antecipada em ' + duracao(x.antecipadaMin) + '.']);
+      // Intervalo curto e assunto da empresa com a lei, nao do colaborador
+      // com a folha: aparece como recado, sem numero de ocorrencia.
+      if(x.intervaloCurto) notas.push(['', 'Intervalo abaixo do mínimo. Sujeito a conferência do RH.']);
       if(x.batidas.length && x.batidas.length % 2 !== 0){
-        notas.push(['', 'Falta a batida de saída deste dia.']);
+        notas.push(['', 'Registro de saída ausente neste dia.']);
       }
     }
     var nota = notas.map(function(n){
@@ -2045,6 +2256,7 @@ function pintaQr(){
         '<div class="ctNota">Primeira vez? A página pede o seu CPF e você escolhe a senha.</div>' +
       '</div>' +
       '<div class="ctRodape">Registre a entrada, a saída para o almoço, a volta e a saída.<br>' +
+      'A volta conta a partir da sua saída: o que vale é o tempo de intervalo.<br>' +
       'Esqueceu de bater? Avise o RH no mesmo dia.</div>' +
     '</div>';
 }
@@ -2097,25 +2309,20 @@ function preencheCfg(){
   }
 }
 
-/* ---- faixas de horario ----
-   Quatro janelas, tres limites. O que vier antes do primeiro limite e
-   Entrada 1; entre o 1o e o 2o, Saida 1; e assim por diante. */
-var FAIXAS_PADRAO = { sai1:600, ent2:750, sai2:1020 };
+/* ---- hora da duvida ----
+   O horario nao decide mais o tipo da batida (quem decide e a ordem, e a
+   pessoa confirma na tela). Sobrou um numero: a partir de que hora a 2a
+   batida do dia deixa de ser obviamente o almoco e vale a pena perguntar
+   se nao e a saida. */
+var DUVIDA_PADRAO = 1050;    // 17:30
 
-function faixasDaCfg(){
-  var f = cfgAtual.faixas || {};
-  return {
-    sai1: f.sai1 != null ? +f.sai1 : FAIXAS_PADRAO.sai1,
-    ent2: f.ent2 != null ? +f.ent2 : FAIXAS_PADRAO.ent2,
-    sai2: f.sai2 != null ? +f.sai2 : FAIXAS_PADRAO.sai2
-  };
+function duvidaDaCfg(){
+  return cfgAtual.duvidaMin != null ? +cfgAtual.duvidaMin : DUVIDA_PADRAO;
 }
 function preencheFaixas(){
-  var f = faixasDaCfg();
-  el('cfgSai1').value = hhmm(f.sai1);
-  el('cfgEnt2').value = hhmm(f.ent2);
-  el('cfgSai2').value = hhmm(f.sai2);
-  pintaResumoFaixas(f);
+  var m = duvidaDaCfg();
+  el('cfgDuvida').value = hhmm(m);
+  pintaResumoFaixas(m);
   pintaRegrasFolha();
 }
 /* A tolerancia mora na Gestao de RH (pontoConfig) e e de la que as duas
@@ -2132,47 +2339,26 @@ function pintaRegrasFolha(){
   });
 }
 
-function pintaResumoFaixas(f){
+function pintaResumoFaixas(m){
   el('faixasResumo').textContent =
-    'Entrada 1: até ' + hhmm(f.sai1 - 1) + '   ·   ' +
-    'Saída 1: ' + hhmm(f.sai1) + ' a ' + hhmm(f.ent2 - 1) + '   ·   ' +
-    'Entrada 2: ' + hhmm(f.ent2) + ' a ' + hhmm(f.sai2 - 1) + '   ·   ' +
-    'Saída 2: a partir de ' + hhmm(f.sai2);
+    'Até ' + hhmm(m - 1) + ', a 2ª batida do dia é registrada direto como saída para o ' +
+    'almoço. A partir de ' + hhmm(m) + ', a tela pergunta se é o almoço ou a saída do dia — ' +
+    'e a pessoa escolhe.';
 }
-['cfgSai1','cfgEnt2','cfgSai2'].forEach(function(id){
-  el(id).addEventListener('input', function(){
-    var f = {
-      sai1: paraMin(el('cfgSai1').value),
-      ent2: paraMin(el('cfgEnt2').value),
-      sai2: paraMin(el('cfgSai2').value)
-    };
-    if(f.sai1 != null && f.ent2 != null && f.sai2 != null) pintaResumoFaixas(f);
-  });
+
+el('cfgDuvida').addEventListener('input', function(){
+  var m = paraMin(el('cfgDuvida').value);
+  if(m != null) pintaResumoFaixas(m);
 });
 
 el('btnSalvarFaixas').addEventListener('click', function(){
-  var f = {
-    sai1: paraMin(el('cfgSai1').value),
-    ent2: paraMin(el('cfgEnt2').value),
-    sai2: paraMin(el('cfgSai2').value)
-  };
-  if(f.sai1 == null || f.ent2 == null || f.sai2 == null){
-    mostraMsg('faixasMsg', 'Preencha os três horários.', 'erro');
-    return;
-  }
-  // Fora de ordem as faixas se engolem e alguma nunca aconteceria.
-  if(!(f.sai1 < f.ent2 && f.ent2 < f.sai2)){
-    mostraMsg('faixasMsg', 'Os horários precisam estar em ordem crescente: ' +
-      'Saída 1, depois Entrada 2, depois Saída 2.', 'erro');
-    return;
-  }
-  supa.rpc('ponto_admin_cfg_salvar', { p: { faixas: f } }).then(function(res){
+  var m = paraMin(el('cfgDuvida').value);
+  if(m == null){ mostraMsg('faixasMsg', 'Preencha o horário.', 'erro'); return; }
+  supa.rpc('ponto_admin_cfg_salvar', { p: { duvidaMin: m } }).then(function(res){
     if(res.error){ mostraMsg('faixasMsg', res.error.message, 'erro'); return; }
     cfgAtual = res.data || {};
     preencheCfg();
-    // A faixa decide o slot na hora da batida e fica gravada junto com ela.
-    mostraMsg('faixasMsg', 'Faixas salvas. Valem para as próximas batidas — ' +
-      'as que já estão gravadas mantêm o tipo que receberam.', 'ok');
+    mostraMsg('faixasMsg', 'Salvo. Vale para as próximas batidas.', 'ok');
   });
 });
 
@@ -2313,59 +2499,126 @@ function pintaSelEscala(){
 
 el('selEscala').addEventListener('change', pintaEscala);
 
+var INTERVALOS = [0, 60, 90, 120];
+
+function selIntervalo(d, itv){
+  var ops = INTERVALOS.slice();
+  if(itv > 0 && ops.indexOf(itv) < 0) ops.push(itv);
+  ops.sort(function(x,y){ return x - y; });
+  return '<select data-dia="' + d + '" data-c="int">' +
+    ops.map(function(v){
+      return '<option value="' + v + '"' + (v === itv ? ' selected' : '') + '>' +
+             (v === 0 ? 'sem intervalo' : duracao(v)) + '</option>';
+    }).join('') + '</select>';
+}
+
+/* A jornada continua gravada como os seis numeros de sempre — e o que a
+   Gestao de RH le. Do par do meio o ponto usa so a DIFERENCA (a duracao do
+   intervalo); a hora em si e nominal e nao decide nada. */
 function pintaEscala(){
   var id = el('selEscala').value;
   escalaEdit = equipe.filter(function(c){ return c.id === id; })[0];
   if(!escalaEdit){ el('tabEscala').innerHTML = ''; return; }
   var j = escalaEdit.jornada || {};
-  var html = '<thead><tr><th>Dia</th><th>Ent. 1</th><th>Saí. 1</th><th>Ent. 2</th>' +
-             '<th>Saí. 2</th><th>Ent. 3</th><th>Saí. 3</th></tr></thead><tbody>';
+  var html = '<thead><tr><th>Dia</th><th>Entrada</th><th>Saída</th>' +
+             '<th>Intervalo (duração)</th><th>Trabalha</th></tr></thead><tbody>';
   ['seg','ter','qua','qui','sex','sab','dom'].forEach(function(d){
     var v = j[d] || [null,null,null,null,null,null];
-    html += '<tr><td style="white-space:nowrap;font-weight:600;">' + DIAS_NOME[d] + '</td>';
-    for(var i = 0; i < 6; i++){
-      html += '<td><input type="time" data-dia="' + d + '" data-i="' + i + '" value="' +
-              (v[i] != null ? hhmm(v[i]) : '') + '"></td>';
-    }
-    html += '</tr>';
+    var ent = v[0], sai = null, itv = 0;
+    if(v[2] != null && v[3] != null){ sai = v[3]; itv = Math.max(0, v[2] - v[1]); }
+    else if(v[1] != null){ sai = v[1]; }
+    var liquido = (ent != null && sai != null) ? Math.max(0, sai - ent - itv) : 0;
+    html += '<tr><td style="white-space:nowrap;font-weight:600;">' + DIAS_NOME[d] + '</td>' +
+      '<td><input type="time" data-dia="' + d + '" data-c="ent" value="' +
+        (ent != null ? hhmm(ent) : '') + '"></td>' +
+      '<td><input type="time" data-dia="' + d + '" data-c="sai" value="' +
+        (sai != null ? hhmm(sai) : '') + '"></td>' +
+      '<td>' + selIntervalo(d, itv) + '</td>' +
+      '<td class="horas" data-liq="' + d + '">' + (liquido ? hhmm(liquido) : '—') + '</td></tr>';
   });
   html += '</tbody>';
   el('tabEscala').innerHTML = html;
   mostraMsg('escalaMsg', '');
 }
 
+/* o "Trabalha" acompanha o que a pessoa digita, sem precisar salvar */
+function pintaLiquidos(){
+  DIAS_SEM.forEach(function(d){
+    var cel = el('tabEscala').querySelector('[data-liq="' + d + '"]');
+    if(!cel) return;
+    var v = leDiaEscala(d);
+    cel.textContent = (v && v.liquido) ? hhmm(v.liquido) : '—';
+  });
+}
+el('tabEscala').addEventListener('input', pintaLiquidos);
+el('tabEscala').addEventListener('change', pintaLiquidos);
+
+function leDiaEscala(d){
+  var t = el('tabEscala');
+  var ent = t.querySelector('input[data-dia="' + d + '"][data-c="ent"]');
+  var sai = t.querySelector('input[data-dia="' + d + '"][data-c="sai"]');
+  var itv = t.querySelector('select[data-dia="' + d + '"][data-c="int"]');
+  if(!ent || !sai) return null;
+  var e = paraMin(ent.value.trim()), s2 = paraMin(sai.value.trim());
+  var i = itv ? (+itv.value || 0) : 0;
+  if(e == null || s2 == null) return { ent:e, sai:s2, int:i, liquido:0 };
+  return { ent:e, sai:s2, int:i, liquido: Math.max(0, s2 - e - i) };
+}
+
 function aplicaModelo(saidaFinal, domingo){
-  var inputs = el('tabEscala').querySelectorAll('input[type=time]');
-  Array.prototype.forEach.call(inputs, function(inp){
-    var d = inp.getAttribute('data-dia'), i = +inp.getAttribute('data-i');
+  var t = el('tabEscala');
+  DIAS_SEM.forEach(function(d){
+    var ent = t.querySelector('input[data-dia="' + d + '"][data-c="ent"]');
+    var sai = t.querySelector('input[data-dia="' + d + '"][data-c="sai"]');
+    var itv = t.querySelector('select[data-dia="' + d + '"][data-c="int"]');
+    if(!ent || !sai) return;
     if(d === 'dom'){
-      inp.value = domingo ? (['07:30','13:00','','','',''][i] || '') : '';
+      ent.value = domingo ? '07:30' : '';
+      sai.value = domingo ? '12:30' : '';
+      if(itv) itv.value = '0';
     } else {
-      inp.value = (['07:30','12:00','13:30',saidaFinal,'',''][i] || '');
+      ent.value = '07:30';
+      sai.value = saidaFinal;
+      if(itv) itv.value = '90';
     }
   });
+  pintaLiquidos();
 }
 el('btnEscalaA').addEventListener('click', function(){ aplicaModelo('18:00', false); });
 el('btnEscalaB').addEventListener('click', function(){ aplicaModelo('18:30', true); });
 el('btnEscalaLimpar').addEventListener('click', function(){
   Array.prototype.forEach.call(el('tabEscala').querySelectorAll('input[type=time]'),
     function(inp){ inp.value = ''; });
+  Array.prototype.forEach.call(el('tabEscala').querySelectorAll('select[data-c=int]'),
+    function(sel){ sel.value = '0'; });
+  pintaLiquidos();
 });
 
 el('btnSalvarEscala').addEventListener('click', function(){
   if(!escalaEdit) return;
+  var antigo = escalaEdit.jornada || {};
   var jornada = {};
-  DIAS_SEM.forEach(function(d){ jornada[d] = [null,null,null,null,null,null]; });
-  var ruim = false;
-  Array.prototype.forEach.call(el('tabEscala').querySelectorAll('input[type=time]'), function(inp){
-    var d = inp.getAttribute('data-dia'), i = +inp.getAttribute('data-i');
-    var t = inp.value.trim();
-    if(!t) return;
-    var m = paraMin(t);
-    if(m == null){ ruim = true; return; }
-    jornada[d][i] = m;
+  var ruim = '';
+  DIAS_SEM.forEach(function(d){
+    jornada[d] = [null,null,null,null,null,null];
+    var v = leDiaEscala(d);
+    if(!v) return;
+    if(v.ent == null && v.sai == null) return;                 // folga
+    if(v.ent == null || v.sai == null){ ruim = DIAS_NOME[d] + ': falta a entrada ou a saída.'; return; }
+    if(v.sai <= v.ent){ ruim = DIAS_NOME[d] + ': a saída tem que ser depois da entrada.'; return; }
+    if(v.int > 0 && v.sai - v.ent <= v.int){
+      ruim = DIAS_NOME[d] + ': o intervalo não cabe dentro do turno.'; return;
+    }
+    if(v.int <= 0){ jornada[d] = [v.ent, v.sai, null, null, null, null]; return; }
+    // A hora nominal do intervalo nao decide nada — mas mantemos a que ja
+    // estava para o cartao ponto da Gestao de RH nao mudar de cara sozinho.
+    var ant = antigo[d] || [];
+    var meio = (ant[1] != null && ant[2] != null) ? ant[1]
+             : v.ent + Math.round((v.sai - v.ent - v.int) / 2);
+    meio = Math.min(Math.max(meio, v.ent + 1), v.sai - v.int - 1);
+    jornada[d] = [v.ent, meio, meio + v.int, v.sai, null, null];
   });
-  if(ruim){ mostraMsg('escalaMsg', 'Tem horário inválido na tabela.', 'erro'); return; }
+  if(ruim){ mostraMsg('escalaMsg', ruim, 'erro'); return; }
 
   supa.rpc('ponto_admin_escala', {
     p_func: escalaEdit.id, p_ativo: null, p_jornada: jornada, p_folha: null
@@ -2392,28 +2645,48 @@ function carregaDia(){
 function pintaDia(dados){
   var itens = (dados && dados.itens) || [];
   var ativos = itens.filter(function(c){ return c.ativo; });
-  var html = '<thead><tr><th>Nome</th><th>Previsto</th><th>Ent. 1</th><th>Saí. 1</th>' +
-             '<th>Ent. 2</th><th>Saí. 2</th><th>Situação</th></tr></thead><tbody>';
+
+  // Domingo e 3o sabado sao meio periodo para a loja inteira: nesses dias a
+  // tabela nao tem coluna de almoco nenhuma.
+  var pontasDia = 4;
+  var comEscala = ativos.filter(function(c){ return +c.pontas > 0; });
+  if(comEscala.length && !comEscala.some(function(c){ return +c.pontas === 4; })) pontasDia = 2;
+  var nCols = pontasDia === 2 ? 2 : 4;
+
+  var cabs = '';
+  for(var k = 1; k <= nCols; k++) cabs += '<th>' + rotuloDaPonta(k, pontasDia) + '</th>';
+  var html = '<thead><tr><th>Nome</th><th>Previsto</th>' + cabs +
+             '<th>Situação</th></tr></thead><tbody>';
+
+  var agoraMin = minutosDeAgora();
 
   html += ativos.map(function(c){
-    var prev = c.previsto || [];
-    var temPrev = prev[0] != null;
+    var prev = c.previsto || {};
+    var pontas = +c.pontas || 0;
+    var temPrev = pontas > 0;
     var feitas = {};
     (c.batidas || []).forEach(function(b){ feitas[b.slot] = b; });
 
     var cels = '';
-    for(var s = 1; s <= 4; s++){
-      var b = feitas[s];
-      // O horario sozinho nao conta a historia: 06:20 na Ent. 1 e hora
-      // extra, 18:00 na Sai. 2 e saida antecipada. O chip diz qual e qual.
+    var maxCol = Math.max(nCols, Math.max.apply(null, [0].concat(
+      (c.batidas || []).map(function(b){ return +b.slot; }))));
+    if(maxCol > 6) maxCol = 6;
+    for(var sl = 1; sl <= maxCol; sl++){
+      var b = feitas[sl];
+      // O horario sozinho nao conta a historia: 06:20 na Entrada e hora
+      // extra, 18:00 na Saida e saida antecipada. O chip diz qual e qual.
       var t = (b && b.classe && b.classe.tipo) || '';
       var mins = (b && b.classe && +b.classe.minutos) || 0;
       var chip = '';
-      if(t === 'extra' && mins)      chip = ' <span class="chip ok" title="hora extra">+' + duracao(mins) + '</span>';
-      else if(t === 'atraso')        chip = ' <span class="chip alerta" title="atraso">atraso ' + duracao(mins) + '</span>';
-      else if(t === 'antecipada')    chip = ' <span class="chip alerta" title="saída antecipada">−' + duracao(mins) + '</span>';
+      if(t === 'extra' && mins)         chip = ' <span class="chip ok" title="hora extra">+' + duracao(mins) + '</span>';
+      else if(t === 'atraso')           chip = ' <span class="chip alerta" title="atraso">atraso ' + duracao(mins) + '</span>';
+      else if(t === 'antecipada')       chip = ' <span class="chip alerta" title="saída antecipada">−' + duracao(mins) + '</span>';
+      else if(t === 'intervalo_ok')     chip = ' <span class="chip nao" title="tempo de intervalo">' + duracao(+b.classe.gastoMin || 0) + '</span>';
+      else if(t === 'intervalo_curto')  chip = ' <span class="chip alerta" title="abaixo do mínimo legal">curto ' + duracao(+b.classe.gastoMin || 0) + '</span>';
+      else if(t === 'sem_par')          chip = ' <span class="chip ruim" title="falta a saída para o almoço">sem par</span>';
       cels += '<td class="horas"><span class="celHora" data-id="' + escapaHtml(c.id) +
-              '" data-slot="' + s + '" data-nome="' + escapaHtml(c.nome) +
+              '" data-slot="' + sl + '" data-pontas="' + (pontas || 4) +
+              '" data-nome="' + escapaHtml(c.nome) +
               '" style="cursor:pointer;border-bottom:1px dotted var(--border);">' +
               (b ? escapaHtml(b.hora) : '<span class="falta">--:--</span>') + '</span>' +
               (b && b.origem === 'manual' ? ' <span title="lançada na mão">*</span>' : '') +
@@ -2422,25 +2695,42 @@ function pintaDia(dados){
               chip +
               '</td>';
     }
+    for(var vaz = maxCol + 1; vaz <= nCols; vaz++) cels += '<td class="horas">—</td>';
 
     var sit;
     var qtd = (c.batidas || []).length;
-    if(!temPrev)      sit = '<span class="chip nao">folga</span>';
-    else if(qtd === 0) sit = '<span class="chip ruim">não bateu</span>';
-    else if(qtd < 4)  sit = '<span class="chip alerta">' + qtd + ' de 4</span>';
-    else              sit = '<span class="chip ok">completo</span>';
+    var esperadas = pontas === 2 ? 2 : 4;
+    if(!temPrev)        sit = '<span class="chip nao">folga</span>';
+    else if(qtd === 0)  sit = '<span class="chip ruim">não bateu</span>';
+    else if(qtd < esperadas) sit = '<span class="chip alerta">' + qtd + ' de ' + esperadas + '</span>';
+    else                sit = '<span class="chip ok">completo</span>';
+
+    // Quem esta no intervalo agora: o RH ve o atraso acontecendo, em vez de
+    // descobrir no fechamento do mes.
+    if(c.noIntervalo){
+      var estourou = agoraMin != null && agoraMin > +c.noIntervalo.limite;
+      sit += ' <span class="chip ' + (estourou ? 'ruim' : 'alerta') +
+             '" title="saiu para o almoço às ' + escapaHtml(c.noIntervalo.desde) + '">' +
+             (estourou ? 'passou das ' : 'volta até ') + escapaHtml(c.noIntervalo.ate) + '</span>';
+    }
+
+    var previstoTxt = '—';
+    if(temPrev){
+      previstoTxt = hhmm(+prev.ent) + '–' + hhmm(+prev.sai) +
+                    (+prev.int > 0 ? ' · ' + duracao(+prev.int) : ' · sem intervalo') +
+                    (prev.sab3 ? ' (3º sáb)' : '');
+    }
 
     return '<tr><td><b>' + escapaHtml(c.nome) + '</b></td>' +
            '<td style="white-space:nowrap;font-size:12.5px;color:var(--ink-soft)">' +
-             (temPrev ? hhmm(prev[0]) + '–' + hhmm(prev[1]) + ' · ' +
-                        hhmm(prev[2]) + '–' + hhmm(prev[3]) : '—') + '</td>' +
+             escapaHtml(previstoTxt) + '</td>' +
            cels + '<td>' + sit + '</td></tr>';
   }).join('');
   html += '</tbody>';
   el('tabHoje').innerHTML = html;
 
   var faltando = ativos.filter(function(c){
-    return (c.previsto || [])[0] != null && (c.batidas || []).length < 4;
+    return +c.pontas > 0 && (c.batidas || []).length < (+c.pontas === 2 ? 2 : 4);
   }).length;
   if(faltando){
     mostraMsg('hojeMsg', faltando + ' colaborador(es) com batida faltando neste dia. ' +
@@ -2457,7 +2747,7 @@ el('tabHoje').addEventListener('click', function(ev){
   if(atual === '--:--') atual = '';
   var nome = c.getAttribute('data-nome');
   var slot = +c.getAttribute('data-slot');
-  var rot = ['Entrada','Saída para o almoço','Volta do almoço','Saída'][slot-1];
+  var rot = rotuloDaPonta(slot, +c.getAttribute('data-pontas') || 4);
   var novo = prompt(rot + ' de ' + nome + ' em ' + el('hojeData').value + '\n\n' +
                     'Digite o horário (HH:MM). Deixe em branco para apagar.', atual);
   if(novo === null) return;
