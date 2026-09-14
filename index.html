@@ -1621,9 +1621,42 @@ el('btnConfirmaBater').addEventListener('click', function(){
   bater(previsao.slot);
 });
 
+/* ---- som de confirmacao ----
+   Gerado na hora (sem arquivo de audio). O celular so libera som dentro de
+   um toque, e a resposta do servidor chega depois: por isso o contexto e
+   destravado no clique do Confirmar e o bipe toca quando a batida grava. */
+var somCtx = null;
+function destravaSom(){
+  try{
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+    if(!somCtx) somCtx = new AC();
+    if(somCtx.state === 'suspended') somCtx.resume();
+  }catch(e){}
+}
+function somConfirmacao(){
+  try{
+    if(!somCtx) return;
+    var t = somCtx.currentTime;
+    // tres notas subindo (do -> mi -> sol), curtinhas
+    [[523.25, 0], [659.25, 0.12], [783.99, 0.24]].forEach(function(n){
+      var osc = somCtx.createOscillator(), vol = somCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = n[0];
+      vol.gain.setValueAtTime(0.0001, t + n[1]);
+      vol.gain.exponentialRampToValueAtTime(0.35, t + n[1] + 0.02);
+      vol.gain.exponentialRampToValueAtTime(0.0001, t + n[1] + 0.25);
+      osc.connect(vol); vol.connect(somCtx.destination);
+      osc.start(t + n[1]);
+      osc.stop(t + n[1] + 0.3);
+    });
+  }catch(e){}
+}
+
 /* ---- 2o passo: grava a ponta que a pessoa confirmou ---- */
 function bater(slot){
   if(ocupado || !colab) return;
+  destravaSom();
   ocupado = true;
   // Enquanto o GPS responde da para sair da conta: guardamos de quem era a
   // batida para nao jogar o resultado dela na cara de outra pessoa.
@@ -1658,6 +1691,7 @@ function bater(slot){
         return;
       }
       previsao = null;
+      somConfirmacao();
       mostraResultado(d);
     });
   });
