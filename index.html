@@ -397,7 +397,7 @@
       <h2 class="titulo">Entrar</h2>
       <p class="dica">
         Seu CPF e a senha de 4 números que você mesmo criou. Depois disso o
-        aparelho lembra de você: para bater o ponto basta ler o QR e digitar a senha.
+        aparelho lembra de você: para registrar o ponto basta ler o QR e digitar a senha.
       </p>
       <form id="loginForm" autocomplete="on">
         <div class="campoNovo">
@@ -429,11 +429,11 @@
           <div class="f" id="prFuncao"></div>
         </div>
       </div>
-      <h2 class="titulo">Bater o ponto</h2>
+      <h2 class="titulo">Registrar ponto</h2>
       <p class="dica" id="prDica">
         Aponte a câmera para o QR Code do cartaz. Depois é só digitar a sua senha.
       </p>
-      <button class="btn bloco" id="btnBaterAgora">Bater o ponto</button>
+      <button class="btn bloco" id="btnBaterAgora">Registrar ponto</button>
       <div class="msg" id="camMsg"></div>
       <button class="btn fantasma bloco" id="btnMeusRegistros" style="margin-top:12px;">
         Ver meus registros
@@ -619,7 +619,7 @@
     </div>
     <div class="abas">
       <button class="aba on" data-aba="qr">Cartaz / QR</button>
-      <button class="aba" data-aba="hoje">Batidas do dia</button>
+      <button class="aba" data-aba="hoje">Registros do dia</button>
       <button class="aba" data-aba="equipe">Equipe e PINs</button>
       <button class="aba" data-aba="escalas">Escalas</button>
       <button class="aba" data-aba="local">Local e regras</button>
@@ -634,7 +634,7 @@
           <h3>O cartaz para colar na parede</h3>
           <p class="sub">
             O QR aponta para o endereço onde esta página está publicada, junto com um código
-            secreto. É esse código que autoriza a batida: sem ele, mesmo quem já entrou com CPF e
+            secreto. É esse código que autoriza o registro: sem ele, mesmo quem já entrou com CPF e
             senha não consegue registrar o ponto. Se o cartaz for parar em mãos erradas, basta
             gerar um código novo e reimprimir.
           </p>
@@ -682,7 +682,7 @@
             </div>
           </div>
           <p class="sub" style="margin:0;">
-            Quem esqueceu de bater aparece com o horário em branco. Clique no horário para
+            Quem deixou de registrar o ponto aparece com o horário em branco. Clique no horário para
             lançar ou corrigir na mão — a correção fica registrada como manual.
           </p>
         </div>
@@ -695,7 +695,7 @@
       <!-- ABA: EQUIPE -->
       <div class="vista" id="vEquipe" hidden>
         <div class="cartao">
-          <h3>Quem pode bater o ponto</h3>
+          <h3>Quem pode registrar o ponto</h3>
           <p class="sub">
             Quem está <b>liberado</b> aparece na tela do QR. Quem ainda não tem PIN cria o
             próprio no primeiro acesso, confirmando o CPF — <b>você não precisa distribuir
@@ -743,8 +743,8 @@
         <div class="cartao">
           <h3>Local da empresa</h3>
           <p class="sub">
-            Abra esta página <b>de dentro do mercado</b> e toque em capturar. A batida só é aceita
-            dentro do raio que você definir — assim ninguém bate o ponto de casa com uma foto do QR.
+            Abra esta página <b>de dentro do mercado</b> e toque em capturar. O registro só é aceito
+            dentro do raio que você definir — assim ninguém registra o ponto de casa com uma foto do QR.
           </p>
           <div class="linhaCampos" style="margin-bottom:14px;">
             <div><label class="campo" for="cfgLat">Latitude</label><input type="text" id="cfgLat" inputmode="decimal"></div>
@@ -755,26 +755,26 @@
           <div class="msg" id="localMsg"></div>
         </div>
         <div class="cartao">
-          <h3>Ordem das batidas</h3>
+          <h3>Ordem dos registros</h3>
           <p class="sub">
-            Quem diz o que cada batida é <b>não é o relógio, é a ordem</b>: a 1ª do dia é a
-            entrada, a 2ª é a saída para o almoço, a 3ª é a volta e a 4ª é a saída.
+            Quem diz o que cada registro é <b>não é o relógio, é a ordem</b>: o 1º do dia é a
+            entrada, o 2º é a saída para o almoço, o 3º é a volta e o 4º é a saída.
             Num mercado o almoço não tem hora marcada — por isso o horário não decide nada.
           </p>
           <p class="sub">
-            E <b>a pessoa confirma o nome da batida na tela antes de gravar</b>, com um botão
-            para trocar. Se alguém esqueceu a batida anterior, corrige ali mesmo, sem virar
+            E <b>a pessoa confirma o nome do registro na tela antes de gravar</b>, com um botão
+            para trocar. Se alguém esqueceu o registro anterior, corrige ali mesmo, sem virar
             uma volta do almoço que nunca aconteceu.
           </p>
           <div class="linhaCampos" style="margin-bottom:14px;">
-            <div><label class="campo" for="cfgDuvida">A 2ª batida vira pergunta a partir de</label>
+            <div><label class="campo" for="cfgDuvida">O 2º registro vira pergunta a partir de</label>
                  <input type="time" id="cfgDuvida"></div>
           </div>
           <div class="msg info" id="faixasResumo"></div>
 
           <h3 style="margin-top:22px;">Hora extra, atraso e saída antecipada</h3>
           <p class="sub">
-            Só <b>duas</b> batidas viram ocorrência, e cada uma contra a sua própria régua:
+            Só <b>dois</b> registros viram ocorrência, e cada um contra a sua própria régua:
             a <b>entrada</b>, comparada com a hora de entrada da escala (06:20 numa escala de
             07:30 é hora extra; 07:40 é atraso), e a <b>saída</b>, comparada com a hora de saída.
             A tolerância evita virar ocorrência por causa de dois minutos.
@@ -804,8 +804,8 @@
             <label style="display:flex;gap:10px;align-items:flex-start;font-size:14.5px;cursor:pointer;">
               <input type="checkbox" id="cfgExigirGps" style="margin-top:3px;width:18px;height:18px;">
               <span><b>Exigir estar no local</b><br>
-                <span style="font-size:13px;color:var(--ink-soft);">Sem GPS ou fora do raio, a batida é recusada.
-                Se estiver desmarcado, a batida passa mas fica gravada a distância.</span></span>
+                <span style="font-size:13px;color:var(--ink-soft);">Sem GPS ou fora do raio, o registro é recusado.
+                Se estiver desmarcado, o registro passa, mas a distância fica gravada.</span></span>
             </label>
             <label style="display:flex;gap:10px;align-items:flex-start;font-size:14.5px;cursor:pointer;">
               <input type="checkbox" id="cfgAtivo" style="margin-top:3px;width:18px;height:18px;">
@@ -825,9 +825,9 @@
       <!-- ABA: FECHAR -->
       <div class="vista" id="vFechar" hidden>
         <div class="cartao">
-          <h3>Levar as batidas para o cartão ponto</h3>
+          <h3>Levar os registros para o cartão ponto</h3>
           <p class="sub">
-            <b>Isto já acontece sozinho.</b> Cada batida registrada, corrigida ou anulada refaz
+            <b>Isto já acontece sozinho.</b> Cada registro feito, corrigido ou anulado refaz
             o mês inteiro no Controle de Ponto na mesma hora — o mês corrente está sempre em dia
             na Gestão de RH, sem ninguém apertar nada.
           </p>
@@ -835,7 +835,7 @@
             Este botão serve para os casos em que o automático não age: um mês que <b>já foi
             importado de planilha</b> (o automático nunca sobrescreve o arquivo do contador), ou
             quando você quer forçar a reconstrução de um mês antigo. Pode rodar quantas vezes
-            quiser — ele sempre refaz o mês inteiro a partir das batidas.
+            quiser — ele sempre refaz o mês inteiro a partir dos registros.
           </p>
           <div class="linhaCampos" style="margin-bottom:16px;">
             <div style="flex:0 0 190px;">
@@ -1354,8 +1354,8 @@ function pintaPronto(){
   el('prNome').textContent   = colab.nome;
   el('prFuncao').textContent = colab.funcao || '';
   el('prDica').textContent = tokenOk
-    ? 'QR Code conferido. Toque em bater o ponto e digite a sua senha.'
-    : 'Toque em bater o ponto e aponte a câmera para o QR Code do cartaz. ' +
+    ? 'QR Code conferido. Toque em Registrar ponto e digite a sua senha.'
+    : 'Toque em Registrar ponto e aponte a câmera para o QR Code do cartaz. ' +
       'Depois é só digitar a sua senha.';
 }
 
@@ -1588,7 +1588,7 @@ el('btnOutraPonta').addEventListener('click', function(){
   if(!previsao) return;
   var ops = (previsao.opcoes || []).filter(function(o){ return +o.slot !== +previsao.slot; });
   if(!ops.length){
-    mostraMsg('cfMsg', 'Não há outra batida disponível hoje.', 'erro');
+    mostraMsg('cfMsg', 'Não há outro registro disponível hoje.', 'erro');
     return;
   }
   el('cfOpcoes').innerHTML = ops.map(function(o){
@@ -1622,34 +1622,59 @@ el('btnConfirmaBater').addEventListener('click', function(){
 });
 
 /* ---- som de confirmacao ----
-   Gerado na hora (sem arquivo de audio). O celular so libera som dentro de
-   um toque, e a resposta do servidor chega depois: por isso o contexto e
-   destravado no clique do Confirmar e o bipe toca quando a batida grava. */
-var somCtx = null;
+   Gerado na hora (sem arquivo de audio): as tres notas viram um WAV em
+   memoria e tocam num <audio>. Nao usamos Web Audio porque no iPhone ela
+   fica muda com a chave do silencioso, e o <audio> nao.
+   O celular so libera som dentro de um toque, e a resposta do servidor
+   chega depois: por isso o elemento e destravado (tocado mudo) no clique
+   do Confirmar e o som de verdade toca quando a batida grava. */
+var somEl = null, somDestravando = false;
+function wavDasNotas(){
+  var taxa = 22050, total = Math.round(taxa * 0.55);
+  // tres notas subindo (do -> mi -> sol), curtinhas
+  var notas = [[523.25, 0], [659.25, 0.12], [783.99, 0.24]];
+  var buf = new ArrayBuffer(44 + total * 2), v = new DataView(buf);
+  function txt(pos, s){ for(var i = 0; i < s.length; i++) v.setUint8(pos + i, s.charCodeAt(i)); }
+  txt(0, 'RIFF'); v.setUint32(4, 36 + total * 2, true); txt(8, 'WAVE');
+  txt(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, taxa, true); v.setUint32(28, taxa * 2, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  txt(36, 'data'); v.setUint32(40, total * 2, true);
+  for(var i = 0; i < total; i++){
+    var t = i / taxa, amostra = 0;
+    notas.forEach(function(n){
+      var dt = t - n[1];
+      if(dt < 0 || dt > 0.3) return;
+      var env = dt < 0.02 ? dt / 0.02 : Math.exp(-(dt - 0.02) * 16);
+      amostra += Math.sin(2 * Math.PI * n[0] * dt) * env * 0.45;
+    });
+    v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, amostra)) * 32767, true);
+  }
+  var bin = '', bytes = new Uint8Array(buf);
+  for(var k = 0; k < bytes.length; k++) bin += String.fromCharCode(bytes[k]);
+  return 'data:audio/wav;base64,' + btoa(bin);
+}
 function destravaSom(){
   try{
-    var AC = window.AudioContext || window.webkitAudioContext;
-    if(!AC) return;
-    if(!somCtx) somCtx = new AC();
-    if(somCtx.state === 'suspended') somCtx.resume();
+    if(!somEl){ somEl = new Audio(wavDasNotas()); somEl.preload = 'auto'; }
+    somDestravando = true;
+    somEl.muted = true;
+    var p = somEl.play();
+    var fim = function(){
+      if(!somDestravando) return;
+      somDestravando = false;
+      somEl.pause(); somEl.currentTime = 0; somEl.muted = false;
+    };
+    if(p && p.then) p.then(fim, fim); else fim();
   }catch(e){}
 }
 function somConfirmacao(){
   try{
-    if(!somCtx) return;
-    var t = somCtx.currentTime;
-    // tres notas subindo (do -> mi -> sol), curtinhas
-    [[523.25, 0], [659.25, 0.12], [783.99, 0.24]].forEach(function(n){
-      var osc = somCtx.createOscillator(), vol = somCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = n[0];
-      vol.gain.setValueAtTime(0.0001, t + n[1]);
-      vol.gain.exponentialRampToValueAtTime(0.35, t + n[1] + 0.02);
-      vol.gain.exponentialRampToValueAtTime(0.0001, t + n[1] + 0.25);
-      osc.connect(vol); vol.connect(somCtx.destination);
-      osc.start(t + n[1]);
-      osc.stop(t + n[1] + 0.3);
-    });
+    if(!somEl) return;
+    somDestravando = false;
+    somEl.pause(); somEl.currentTime = 0; somEl.muted = false;
+    var p = somEl.play();
+    if(p && p.catch) p.catch(function(){});
   }catch(e){}
 }
 
@@ -1763,7 +1788,7 @@ function mostraResultado(d){
 
   var obs = '';
   if(d.repetida){
-    obs = '<div class="obs">Esta batida já estava registrada.</div>';
+    obs = '<div class="obs">Este registro já havia sido feito.</div>';
   } else if(f){
     obs = '<div class="obs ' + f.tom + '">' + escapaHtml(f.texto) + '</div>';
   }
@@ -1934,14 +1959,14 @@ function pintaPortal(d){
   if(d.desde && d.desde > d.mes + '-01'){
     mostraMsg('ptMsg', 'A contagem deste mês começa em ' +
       d.desde.slice(8,10) + '/' + d.desde.slice(5,7) +
-      ', o seu primeiro dia batendo o ponto por aqui.', 'info');
+      ', o seu primeiro dia registrando o ponto por aqui.', 'info');
   }
 
   var dias = (d.dias || []).slice().reverse();   // o dia de hoje primeiro
   var comAlgo = dias.filter(function(x){ return x.batidas.length || x.falta; });
   if(!comAlgo.length){
     el('ptDias').innerHTML =
-      '<div class="ptVazio">Nenhuma batida registrada neste mês.</div>';
+      '<div class="ptVazio">Nenhum registro neste mês.</div>';
     return;
   }
   el('ptDias').innerHTML = dias.map(function(x){
@@ -2291,7 +2316,7 @@ function pintaQr(){
       '</div>' +
       '<div class="ctRodape">Registre a entrada, a saída para o almoço, a volta e a saída.<br>' +
       'A volta conta a partir da sua saída: o que vale é o tempo de intervalo.<br>' +
-      'Esqueceu de bater? Avise o RH no mesmo dia.</div>' +
+      'Esqueceu de registrar o ponto? Avise o RH no mesmo dia.</div>' +
     '</div>';
 }
 
@@ -2338,7 +2363,7 @@ function preencheCfg(){
   preencheFaixas();
   if(cfgAtual.lat == null){
     mostraMsg('localMsg',
-      'A localização da empresa ainda não foi capturada — enquanto isso, a batida é aceita ' +
+      'A localização da empresa ainda não foi capturada — enquanto isso, o registro é aceito ' +
       'de qualquer lugar. Abra esta página dentro do mercado e toque no botão acima.', 'info');
   }
 }
@@ -2375,7 +2400,7 @@ function pintaRegrasFolha(){
 
 function pintaResumoFaixas(m){
   el('faixasResumo').textContent =
-    'Até ' + hhmm(m - 1) + ', a 2ª batida do dia é registrada direto como saída para o ' +
+    'Até ' + hhmm(m - 1) + ', o 2º registro do dia é gravado direto como saída para o ' +
     'almoço. A partir de ' + hhmm(m) + ', a tela pergunta se é o almoço ou a saída do dia — ' +
     'e a pessoa escolhe.';
 }
@@ -2392,7 +2417,7 @@ el('btnSalvarFaixas').addEventListener('click', function(){
     if(res.error){ mostraMsg('faixasMsg', res.error.message, 'erro'); return; }
     cfgAtual = res.data || {};
     preencheCfg();
-    mostraMsg('faixasMsg', 'Salvo. Vale para as próximas batidas.', 'ok');
+    mostraMsg('faixasMsg', 'Salvo. Vale para os próximos registros.', 'ok');
   });
 });
 
@@ -2454,7 +2479,7 @@ function carregaEquipe(){
 function pintaEquipe(){
   var soltos = equipe.filter(function(c){ return c.ativo && !c.temPin; }).length;
   var html =
-    '<thead><tr><th>Nome</th><th>Folha</th><th>Bate ponto</th><th>PIN</th><th></th></tr></thead><tbody>';
+    '<thead><tr><th>Nome</th><th>Folha</th><th>Registra ponto</th><th>PIN</th><th></th></tr></thead><tbody>';
   html += equipe.map(function(c){
     return '<tr>' +
       '<td><b>' + escapaHtml(c.nome) + '</b><br>' +
@@ -2723,7 +2748,7 @@ function pintaDia(dados){
               '" data-nome="' + escapaHtml(c.nome) +
               '" style="cursor:pointer;border-bottom:1px dotted var(--border);">' +
               (b ? escapaHtml(b.hora) : '<span class="falta">--:--</span>') + '</span>' +
-              (b && b.origem === 'manual' ? ' <span title="lançada na mão">*</span>' : '') +
+              (b && b.origem === 'manual' ? ' <span title="lançado na mão">*</span>' : '') +
               (b && b.foraArea ? ' <span class="chip alerta" title="' + escapaHtml(b.distancia) +
                 ' m da loja">fora</span>' : '') +
               chip +
@@ -2735,7 +2760,7 @@ function pintaDia(dados){
     var qtd = (c.batidas || []).length;
     var esperadas = pontas === 2 ? 2 : 4;
     if(!temPrev)        sit = '<span class="chip nao">folga</span>';
-    else if(qtd === 0)  sit = '<span class="chip ruim">não bateu</span>';
+    else if(qtd === 0)  sit = '<span class="chip ruim">sem registro</span>';
     else if(qtd < esperadas) sit = '<span class="chip alerta">' + qtd + ' de ' + esperadas + '</span>';
     else                sit = '<span class="chip ok">completo</span>';
 
@@ -2767,7 +2792,7 @@ function pintaDia(dados){
     return +c.pontas > 0 && (c.batidas || []).length < (+c.pontas === 2 ? 2 : 4);
   }).length;
   if(faltando){
-    mostraMsg('hojeMsg', faltando + ' colaborador(es) com batida faltando neste dia. ' +
+    mostraMsg('hojeMsg', faltando + ' colaborador(es) com registro faltando neste dia. ' +
       'Clique no horário em branco para lançar na mão.', 'info');
   } else {
     mostraMsg('hojeMsg', '');
@@ -2797,7 +2822,7 @@ el('tabHoje').addEventListener('click', function(ev){
       var alvo = item && (item.batidas || []).filter(function(x){ return x.slot === slot; })[0];
       if(!alvo){ return; }
       supa.rpc('ponto_admin_batida_anular', { p_id: alvo.id, p_por: el('adQuem').textContent })
-        .then(function(){ carregaDia(); mostraMsg('hojeMsg', 'Batida apagada.', 'ok'); });
+        .then(function(){ carregaDia(); mostraMsg('hojeMsg', 'Registro apagado.', 'ok'); });
     });
     return;
   }
@@ -2811,7 +2836,7 @@ el('tabHoje').addEventListener('click', function(ev){
     p_dia:  el('hojeData').value,
     p_slot: slot,
     p_hora: novo,
-    p_obs:  'lançada pelo RH',
+    p_obs:  'lançado pelo RH',
     p_por:  el('adQuem').textContent
   }).then(function(res){
     if(res.error){ mostraMsg('hojeMsg', res.error.message, 'erro'); return; }
@@ -2837,7 +2862,7 @@ function rodaSync(mes, forcar){
     var d = res.data || {};
     if(!d.ok){
       if(d.erro === 'ocupado'){
-        if(confirm(d.msg + '\n\nSubstituir pelas batidas do QR?')) rodaSync(mes, true);
+        if(confirm(d.msg + '\n\nSubstituir pelos registros do QR?')) rodaSync(mes, true);
         return;
       }
       mostraMsg('fecharMsg', d.msg || 'Não deu certo.', 'erro');
@@ -2845,7 +2870,7 @@ function rodaSync(mes, forcar){
     }
     mostraMsg('fecharMsg',
       'Pronto: ' + d.colaboradores + ' colaboradores e ' + d.batidas +
-      ' batidas gravadas no Controle de Ponto de ' + mes +
+      ' registros gravados no Controle de Ponto de ' + mes +
       ' (até o dia ' + d.ateDia + '). Confira no sistema de RH.', 'ok');
   });
 }
