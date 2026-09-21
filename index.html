@@ -1034,9 +1034,28 @@ var modo = 'bater';
 function leToken(){
   var h = location.hash || '';
   var m = /[#&]t=([^&]+)/.exec(h);
-  if(m) return decodeURIComponent(m[1]);
   var q = new URLSearchParams(location.search);
-  return q.get('t') || '';
+  var t = m ? decodeURIComponent(m[1]) : (q.get('t') || '');
+  // O link do cartaz vale uma leitura só. Tiramos o código do endereço na
+  // hora: recarregar a página ou reabrir a aba depois não o traz de volta,
+  // e a pessoa precisa apontar a câmera para o cartaz de novo.
+  if(t){
+    try{
+      q.delete('t');
+      var busca = q.toString();
+      var resto = h.replace(/[#&]t=[^&]*/, '').replace(/^&/, '#');
+      history.replaceState(null, '', location.pathname + (busca ? '?' + busca : '') +
+                           (resto && resto !== '#' ? resto : ''));
+    }catch(e){}
+  }
+  return t;
+}
+
+/* O código lido vale para UM registro, feito logo em seguida. Depois do
+   registro, ou se a aba ficou esquecida em segundo plano, ele é
+   descartado e a próxima vez começa pela câmera. */
+function descartaToken(){
+  TOKEN = ''; tokenOk = false;
 }
 
 /* ---- a sessão do colaborador neste aparelho ----
@@ -1181,8 +1200,8 @@ function iniciaLeitura(){
     paraCamera();
     TOKEN = t;
     tokenOk = false;
-    // Deixa o codigo no endereco: da proxima vez a pessoa abre direto.
-    try{ location.hash = 't=' + encodeURIComponent(t); }catch(e){}
+    // O codigo NAO vai para o endereco: uma aba esquecida aberta (ou
+    // recarregada em casa) nao pode continuar valendo como leitura do QR.
     confereToken();
     return true;
   }
@@ -1365,7 +1384,10 @@ function depoisDeEntrar(){
   pintaPronto();
   if(TOKEN && !tokenOk){ confereToken(); return; }
   if(TOKEN && tokenOk){ modo = 'bater'; abrePin(); return; }
+  // Sem QR lido nesta abertura, o primeiro passo é sempre a câmera. Se ela
+  // não abrir, abreCamera volta para a tela de início com o aviso.
   passo('pronto');
+  abreCamera();
 }
 
 /* O QR do cartaz é a prova de que a pessoa está na loja. Conferimos ele
@@ -1716,6 +1738,8 @@ function bater(slot){
         return;
       }
       previsao = null;
+      // Registro feito: o QR lido já foi usado. O próximo começa pela câmera.
+      descartaToken();
       somConfirmacao();
       mostraResultado(d);
     });
@@ -1781,6 +1805,8 @@ function frasePonto(classe, slot){
 }
 
 function mostraResultado(d){
+  // Vale também para o "já havia sido feito": o QR lido foi gasto.
+  descartaToken();
   var f = frasePonto(d.classe, d.slot);
 
   var selo = 'ok', simbolo = '✓';
@@ -1844,6 +1870,31 @@ function voltaInicio(){
 }
 
 el('btnConcluir').addEventListener('click', voltaInicio);
+
+/* ---- aba esquecida aberta ----
+   O celular não fecha a aba: ela fica em segundo plano com o QR lido de
+   manhã na memória. Quem voltar a ela depois de um minuto recomeça pela
+   câmera — um toque rápido em outro aplicativo no meio da senha não. */
+var escondidaEm = 0;
+function voltouParaAba(){
+  var longe = escondidaEm && (Date.now() - escondidaEm) > 60000;
+  escondidaEm = 0;
+  if(!longe || !colab || ocupado || el('telaBatida').hidden) return;
+  descartaToken();
+  pin = ''; modo = 'bater'; previsao = null;
+  mostraMsg('camMsg', '');
+  depoisDeEntrar();
+}
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden){ escondidaEm = Date.now(); return; }
+  voltouParaAba();
+});
+// Página devolvida do cache do navegador (botão voltar, aba restaurada).
+window.addEventListener('pageshow', function(ev){
+  if(!ev.persisted) return;
+  if(!escondidaEm) escondidaEm = 1;   // não sabemos há quanto tempo: trata como longe
+  voltouParaAba();
+});
 
 /* ====================================================================
    PORTAL DO COLABORADOR
