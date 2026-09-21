@@ -681,9 +681,8 @@
               <button class="btn pequeno" id="btnRecarregarDia">Atualizar</button>
             </div>
           </div>
-          <p class="sub" style="margin:0;">
-            Quem deixou de registrar o ponto aparece com o horário em branco. Clique no horário para
-            lançar ou corrigir na mão — a correção fica registrada como manual.
+          <p class="sub" style="margin:0;" id="hojeDica">
+            Quem deixou de registrar o ponto aparece com o horário em branco.
           </p>
         </div>
         <div class="cartao">
@@ -2093,6 +2092,10 @@ el('btnSairPortal').addEventListener('click', function(){
    ADMIN
    ==================================================================== */
 var cfgAtual = {};
+/* Corrigir registro (lançar, trocar horário, apagar) é de uma conta só. Quem
+   decide é o banco (ponto_pode_corrigir); aqui só escondemos o que não
+   funcionaria para os demais. */
+var podeCorrigir = false;
 var equipe = [];
 var escalaEdit = null;
 
@@ -2180,7 +2183,15 @@ function entrou(sessao){
     el('hojeData').value = isoLocal(hoje);
     el('fecharMes').value = isoLocal(hoje).slice(0,7);
     carregaEquipe();
-    carregaDia();
+    supa.rpc('ponto_pode_corrigir').then(function(r){
+      podeCorrigir = !r.error && r.data === true;
+      el('hojeDica').innerHTML = podeCorrigir
+        ? 'Quem deixou de registrar o ponto aparece com o horário em branco. Clique no horário para ' +
+          'lançar, corrigir ou apagar. Toda correção pede o motivo e fica gravada como manual.'
+        : 'Quem deixou de registrar o ponto aparece com o horário em branco. ' +
+          '<b>Correções de registro são feitas só pelo responsável pelo ponto.</b>';
+      carregaDia();
+    });
   });
 }
 
@@ -2794,10 +2805,12 @@ function pintaDia(dados){
       else if(t === 'intervalo_ok')     chip = ' <span class="chip nao" title="tempo de intervalo">' + duracao(+b.classe.gastoMin || 0) + '</span>';
       else if(t === 'intervalo_curto')  chip = ' <span class="chip alerta" title="abaixo do mínimo legal">curto ' + duracao(+b.classe.gastoMin || 0) + '</span>';
       else if(t === 'sem_par')          chip = ' <span class="chip ruim" title="falta a saída para o almoço">sem par</span>';
-      cels += '<td class="horas"><span class="celHora" data-id="' + escapaHtml(c.id) +
+      cels += '<td class="horas"><span class="' + (podeCorrigir ? 'celHora' : '') +
+              '" data-id="' + escapaHtml(c.id) +
               '" data-slot="' + sl + '" data-pontas="' + (pontas || 4) +
-              '" data-nome="' + escapaHtml(c.nome) +
-              '" style="cursor:pointer;border-bottom:1px dotted var(--border);">' +
+              '" data-nome="' + escapaHtml(c.nome) + '"' +
+              (podeCorrigir ? ' title="Clique para corrigir" style="cursor:pointer;border-bottom:1px dotted var(--border);"' : '') +
+              '>' +
               (b ? escapaHtml(b.hora) : '<span class="falta">--:--</span>') + '</span>' +
               (b && b.origem === 'manual' ? ' <span title="lançado na mão">*</span>' : '') +
               (b && b.foraArea ? ' <span class="chip alerta" title="' + escapaHtml(b.distancia) +
@@ -2843,8 +2856,8 @@ function pintaDia(dados){
     return +c.pontas > 0 && (c.batidas || []).length < (+c.pontas === 2 ? 2 : 4);
   }).length;
   if(faltando){
-    mostraMsg('hojeMsg', faltando + ' colaborador(es) com registro faltando neste dia. ' +
-      'Clique no horário em branco para lançar na mão.', 'info');
+    mostraMsg('hojeMsg', faltando + ' colaborador(es) com registro faltando neste dia.' +
+      (podeCorrigir ? ' Clique no horário em branco para lançar na mão.' : ''), 'info');
   } else {
     mostraMsg('hojeMsg', '');
   }
@@ -2852,7 +2865,7 @@ function pintaDia(dados){
 
 el('tabHoje').addEventListener('click', function(ev){
   var c = ev.target.closest('.celHora');
-  if(!c) return;
+  if(!c || !podeCorrigir) return;
   var atual = c.textContent.trim();
   if(atual === '--:--') atual = '';
   var nome = c.getAttribute('data-nome');
@@ -2862,6 +2875,23 @@ el('tabHoje').addEventListener('click', function(ev){
                     'Digite o horário (HH:MM). Deixe em branco para apagar.', atual);
   if(novo === null) return;
   novo = novo.trim();
+  if(!novo && !atual) return;                      // nada a apagar
+  if(novo && paraMin(novo) == null){
+    mostraMsg('hojeMsg', 'Horário inválido. Use HH:MM, por exemplo 07:30.', 'erro');
+    return;
+  }
+  if(novo && novo === atual) return;               // nada mudou
+
+  // Correção de ponto sem justificativa não se sustenta numa fiscalização:
+  // o motivo vai gravado junto com quem corrigiu.
+  var motivo = prompt((novo ? 'Motivo da correção' : 'Motivo para apagar este registro') +
+                      ' (ex.: esqueceu de registrar, celular sem bateria):', '');
+  if(motivo === null) return;
+  motivo = motivo.trim();
+  if(!motivo){
+    mostraMsg('hojeMsg', 'A correção precisa de um motivo. Nada foi alterado.', 'erro');
+    return;
+  }
 
   if(!novo){
     // Apagar = anular a batida. Recarregamos o dia so para pegar o id
@@ -2872,23 +2902,24 @@ el('tabHoje').addEventListener('click', function(ev){
       })[0];
       var alvo = item && (item.batidas || []).filter(function(x){ return x.slot === slot; })[0];
       if(!alvo){ return; }
-      supa.rpc('ponto_admin_batida_anular', { p_id: alvo.id, p_por: el('adQuem').textContent })
-        .then(function(){ carregaDia(); mostraMsg('hojeMsg', 'Registro apagado.', 'ok'); });
+      supa.rpc('ponto_admin_batida_anular', { p_id: alvo.id, p_motivo: motivo })
+        .then(function(r){
+          if(r.error){ mostraMsg('hojeMsg', r.error.message, 'erro'); return; }
+          if(r.data && r.data.ok === false){
+            mostraMsg('hojeMsg', r.data.msg || 'Este registro já tinha sido apagado.', 'erro'); return;
+          }
+          carregaDia(); mostraMsg('hojeMsg', 'Registro apagado.', 'ok');
+        });
     });
     return;
   }
 
-  if(paraMin(novo) == null){
-    mostraMsg('hojeMsg', 'Horário inválido. Use HH:MM, por exemplo 07:30.', 'erro');
-    return;
-  }
   supa.rpc('ponto_admin_batida_manual', {
     p_func: c.getAttribute('data-id'),
     p_dia:  el('hojeData').value,
     p_slot: slot,
     p_hora: novo,
-    p_obs:  'lançado pelo RH',
-    p_por:  el('adQuem').textContent
+    p_obs:  motivo
   }).then(function(res){
     if(res.error){ mostraMsg('hojeMsg', res.error.message, 'erro'); return; }
     if(res.data && res.data.ok === false){ mostraMsg('hojeMsg', res.data.msg, 'erro'); return; }
