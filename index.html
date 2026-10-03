@@ -694,9 +694,23 @@
       <!-- ABA: EQUIPE -->
       <div class="vista" id="vEquipe" hidden>
         <div class="cartao">
+          <h3>Cadastrar colaborador por CPF</h3>
+          <p class="sub">Cadastre uma vez para liberar o ponto. O colaborador escolhe a própria senha de 4 números em <b>Primeiro acesso</b>.</p>
+          <form id="cadastroEquipeForm">
+            <label class="campo" for="cadastroNome">Nome completo</label>
+            <input id="cadastroNome" class="busca" type="text" maxlength="150" autocomplete="off" required>
+            <label class="campo" for="cadastroCpf">CPF</label>
+            <input id="cadastroCpf" class="busca" type="text" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" autocomplete="off" required>
+            <label class="campo" for="cadastroFuncao">Função (opcional)</label>
+            <input id="cadastroFuncao" class="busca" type="text" maxlength="100" autocomplete="off">
+            <button class="btn" id="btnCadastrarEquipe" type="submit">Cadastrar e liberar ponto</button>
+            <div class="msg" id="cadastroEquipeMsg" role="status" aria-live="polite"></div>
+          </form>
+        </div>
+        <div class="cartao">
           <h3>Quem pode registrar o ponto</h3>
           <p class="sub">
-            Quem está <b>liberado</b> aparece na tela do QR. Quem ainda não tem PIN cria o
+            Quem está <b>liberado</b> pode registrar o ponto pelo QR. Quem ainda não tem PIN cria o
             próprio no primeiro acesso, confirmando o CPF — <b>você não precisa distribuir
             PIN nenhum</b>, e não tem como ver o PIN de ninguém. Se alguém esquecer o dele,
             use <b>Liberar 1º acesso</b> e a pessoa escolhe outro.
@@ -2529,6 +2543,93 @@ el('btnSalvarCfg').addEventListener('click', function(){
 });
 
 /* ---- equipe e PINs ---- */
+function cpfValido(valor){
+  var cpf = String(valor || '').replace(/\D/g, '');
+  if(!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
+  for(var tamanho = 9; tamanho <= 10; tamanho++){
+    var soma = 0;
+    for(var i = 0; i < tamanho; i++) soma += Number(cpf[i]) * (tamanho + 1 - i);
+    var digito = (soma * 10) % 11;
+    if(digito === 10) digito = 0;
+    if(digito !== Number(cpf[tamanho])) return false;
+  }
+  return true;
+}
+
+mascaraCpf(el('cadastroCpf'));
+async function cadastrarColaboradorPonto(nome, cpf, funcao){
+  // Usa o mesmo contrato de cadastro da Gestão de RH, sempre com estado fresco.
+  // As RPCs existentes verificam a permissão do usuário autenticado no servidor.
+  var leitura = await supa.rpc('rh_carregar_estado');
+  if(leitura.error) throw new Error(leitura.error.message);
+  var estado = leitura.data;
+  if(!estado || !Array.isArray(estado.funcionarios)){
+    throw new Error('Não foi possível carregar o cadastro do RH. Nenhum dado foi alterado.');
+  }
+  var encontrados = estado.funcionarios.filter(function(f){
+    return String(f.cpf || '').replace(/\D/g, '') === cpf;
+  });
+  if(encontrados.length > 1) throw new Error('Este CPF está duplicado na Gestão de RH. Corrija o cadastro lá antes de liberar o ponto.');
+  var colaborador = encontrados[0];
+  var existente = !!colaborador;
+  if(colaborador && String(colaborador.nome || '').trim().toLocaleLowerCase('pt-BR') !== nome.toLocaleLowerCase('pt-BR')){
+    throw new Error('Este CPF já pertence a outro nome no RH. Confira os dados antes de continuar.');
+  }
+  if(!colaborador){
+    if(estado.funcionarios.some(function(f){
+      return String(f.nome || '').trim().toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR');
+    })) throw new Error('Já existe um colaborador com este nome. Confira o CPF na Gestão de RH para evitar cadastro duplicado.');
+    var novoId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID()
+      : Array.from(crypto.getRandomValues(new Uint8Array(16)), function(n){ return n.toString(16).padStart(2, '0'); }).join('');
+    colaborador = { id: 'f_' + novoId, nome: nome, nomePonto: nome, cpf: cpf, funcao: funcao, salarioBase: 0 };
+    estado.funcionarios.push(colaborador);
+    // O RH mantém o caixa em tabelas próprias; não reenvia esses campos legados.
+    ['clientes','recebimentos','retiradas','aberturas','produtos','vendas','suprimentos',
+      'notinhasAvulsas','caixaDia','recHisForma'].forEach(function(k){ delete estado[k]; });
+    var gravacao = await supa.rpc('rh_salvar_estado', { p_estado: estado });
+    if(gravacao.error) throw new Error(gravacao.error.message);
+    if(gravacao.data && gravacao.data.ok === false) throw new Error(gravacao.data.msg || 'O RH recusou o cadastro.');
+  }
+  // Não redefine PINs existentes. Se esta etapa falhar, repetir reutiliza o CPF.
+  var liberacao = await supa.rpc('ponto_admin_escala', {
+    p_func: colaborador.id, p_ativo: true, p_jornada: null, p_folha: null
+  });
+  if(liberacao.error || (liberacao.data && liberacao.data.ok === false)){
+    throw new Error('O cadastro está no RH, mas não foi possível liberar o ponto. Tente cadastrar novamente com o mesmo CPF.');
+  }
+  var verificacao = await supa.rpc('ponto_admin_equipe');
+  var pessoa = verificacao.data && Array.isArray(verificacao.data.itens) && verificacao.data.itens.find(function(f){ return f.id === colaborador.id; });
+  if(verificacao.error || !pessoa || !pessoa.ativo){
+    throw new Error('O cadastro foi enviado, mas a liberação ainda não foi confirmada. Atualize a equipe ou tente novamente com o mesmo CPF.');
+  }
+  return { ok: true, msg: pessoa.temPin
+    ? 'Colaborador já cadastrado e liberado. A senha existente foi mantida.'
+    : (existente ? 'Colaborador liberado.' : 'Colaborador cadastrado e liberado.') + ' Agora ele informa o CPF em Primeiro acesso e cria a própria senha.' };
+}
+
+el('cadastroEquipeForm').addEventListener('submit', async function(ev){
+  ev.preventDefault();
+  var b = el('btnCadastrarEquipe');
+  if(b.disabled) return;
+  var nome = el('cadastroNome').value.trim();
+  var cpf = el('cadastroCpf').value.replace(/\D/g, '');
+  var funcao = el('cadastroFuncao').value.trim();
+  if(nome.length < 3){ mostraMsg('cadastroEquipeMsg', 'Informe o nome completo.', 'erro'); return; }
+  if(!cpfValido(cpf)){ mostraMsg('cadastroEquipeMsg', 'CPF inválido. Confira os 11 números.', 'erro'); return; }
+  b.disabled = true; b.textContent = 'Cadastrando...';
+  mostraMsg('cadastroEquipeMsg', '');
+  try{
+    var resultado = await cadastrarColaboradorPonto(nome, cpf, funcao);
+    el('cadastroEquipeForm').reset();
+    mostraMsg('cadastroEquipeMsg', resultado.msg, 'ok');
+    carregaEquipe();
+  }catch(e){
+    mostraMsg('cadastroEquipeMsg', e.message || 'Sem conexão. Tente novamente.', 'erro');
+  }finally{
+    b.disabled = false; b.textContent = 'Cadastrar e liberar ponto';
+  }
+});
+
 function carregaEquipe(){
   supa.rpc('ponto_admin_equipe').then(function(res){
     if(res.error){ mostraMsg('equipeMsg', res.error.message, 'erro'); return; }
