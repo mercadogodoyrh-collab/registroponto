@@ -875,8 +875,8 @@
    pública de propósito: sem CPF e senha do colaborador não se lê nada, sem
    o código do QR não se bate ponto, e sem login de RH não se alcança o admin.
    ==================================================================== */
-var SUPABASE_URL = "https://vieafcgghboxwhultile.supabase.co";
-var SUPABASE_KEY = "sb_publishable_HaMcgvr_2xmWYotvzetmVA_yscPz2eT";
+var SUPABASE_URL = "https://ecology-scenic-lamps-tongue.trycloudflare.com";
+var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkyNDEwNjEzLCJleHAiOjE5NTAwOTA2MTN9.Xb31aY4BNVUiL40sZELvNBvoltDVcJlQ_l7j8Livw1I";
 
 var el = function(id){ return document.getElementById(id); };
 
@@ -923,8 +923,17 @@ var guarda = {
   }
 };
 
+/* O atalho do RH usa a sessão isolada daquele sistema, no mesmo domínio.
+   A origem só escolhe a sessão: entrou() continua validando o acesso no banco.
+   Não copiamos credenciais para URLs nem para a sessão compartilhada do Estoque. */
+function configuracaoAuthPonto(busca){
+  var auth = { storage: guarda, persistSession: true, autoRefreshToken: true };
+  var params = new URLSearchParams(busca);
+  if(params.has('admin') && params.get('origem') === 'rh') auth.storageKey = 'rh_sessao_v1';
+  return auth;
+}
 var supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { storage: guarda, persistSession: true, autoRefreshToken: true }
+  auth: configuracaoAuthPonto(location.search)
 });
 
 var DIAS_SEM = ['dom','seg','ter','qua','qui','sex','sab'];
